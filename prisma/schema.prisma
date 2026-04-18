@@ -38,12 +38,16 @@ model User {
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  products      Product[]      @relation("SellerProducts")
-  cart          Cart?
-  orders        Order[]
-  reviews       Review[]
-  wishlist      Wishlist[]
-  notifications Notification[]
+  products             Product[]      @relation("SellerProducts")
+  cart                 Cart?
+  orders               Order[]
+  reviews              Review[]
+  wishlist             Wishlist[]
+  notifications        Notification[]
+  sentMessages         Message[]      @relation("SentMessages")
+  receivedMessages     Message[]      @relation("ReceivedMessages")
+  complaintsSubmitted  Complaint[]    @relation("ComplaintUser")
+  complaintsReceived   Complaint[]    @relation("ComplaintSeller")
 }
 
 ///////////////////////
@@ -87,6 +91,7 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
   wishlist   Wishlist[]
+  complaints Complaint[]
 }
 
 ///////////////////////
@@ -178,8 +183,41 @@ model Wishlist {
 }
 
 ///////////////////////
-// VERIFICATION TOKENS
+// MESSAGES
 ///////////////////////
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String   @db.Text
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  senderId   Int
+  receiverId Int
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+///////////////////////
+// COMPLAINTS
+///////////////////////
+
+model Complaint {
+  id        Int      @id @default(autoincrement())
+  subject   String
+  message   String   @db.Text
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  userId    Int
+  productId Int?
+  sellerId  Int?
+
+  user    User     @relation("ComplaintUser", fields: [userId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+  seller  User?    @relation("ComplaintSeller", fields: [sellerId], references: [id])
+}
 
 ///////////////////////
 // NOTIFICATIONS
@@ -194,10 +232,13 @@ model Notification {
   link      String?
   createdAt DateTime @default(now())
 
-  // null = admin-wide; set = user-specific (seller)
   userId Int?
   user   User? @relation(fields: [userId], references: [id])
 }
+
+///////////////////////
+// VERIFICATION TOKENS
+///////////////////////
 
 model VerificationToken {
   id        Int      @id @default(autoincrement())

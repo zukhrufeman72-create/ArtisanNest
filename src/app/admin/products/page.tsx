@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { approveProduct, rejectProduct } from '@/app/actions/admin'
 import { Package, CheckCircle, XCircle, Search, Pencil } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 import Link from 'next/link'
 import AdminDeleteProduct from '@/components/admin/AdminDeleteProduct'
 
@@ -203,9 +204,9 @@ export default async function AllProductsPage({
                     <td className="px-5 py-3.5 text-[#9E8079] text-xs">{product.category.name}</td>
                     {/* Price */}
                     <td className="px-5 py-3.5">
-                      <p className="font-semibold text-[#2D1F1A]">${product.price.toFixed(2)}</p>
+                      <p className="font-semibold text-[#2D1F1A]">{formatPrice(product.price)}</p>
                       {product.discountPrice && (
-                        <p className="text-[10px] text-[#7D9B76]">${product.discountPrice.toFixed(2)}</p>
+                        <p className="text-[10px] text-[#7D9B76]">{formatPrice(product.discountPrice)}</p>
                       )}
                     </td>
                     {/* Stock */}

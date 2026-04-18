@@ -1,6 +1,7 @@
 import { getOptionalSession } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 import Navbar from './Navbar'
+import MessengerPanelWrapper from './MessengerPanelWrapper'
 
 export default async function NavbarWrapper() {
   const session = await getOptionalSession()
@@ -23,5 +24,10 @@ export default async function NavbarWrapper() {
     initialCartCount = countResult._sum.quantity ?? 0
   }
 
-  return <Navbar user={user} initialCartCount={initialCartCount} />
+  return (
+    <>
+      <Navbar user={user} initialCartCount={initialCartCount} />
+      <MessengerPanelWrapper currentUserId={session?.userId ?? null} />
+    </>
+  )
 }

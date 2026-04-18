@@ -6,8 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Package, ShoppingBag,
   BarChart3, MessageSquare, Settings, LogOut,
-  ChevronDown, UserCheck, ShoppingCart, Tags,
-  PackageCheck, X,
+  ChevronDown, X,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -39,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { label: 'Orders', icon: ShoppingBag, href: '/admin/orders' },
   { label: 'Reports', icon: BarChart3, href: '/admin/reports' },
-  { label: 'Feedback', icon: MessageSquare, href: '/admin/feedback' },
+  { label: 'Complaints', icon: MessageSquare, href: '/admin/complaints' },
   { label: 'Settings', icon: Settings, href: '/admin/settings' },
 ]
 

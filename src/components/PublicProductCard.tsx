@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, ShoppingCart, Star, Package, CheckCircle, Loader2 } from 'lucide-react'
-import Link from 'next/link'
+import { Heart, ShoppingCart, Star, Package, CheckCircle, Loader2, MessageCircle } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 
 export type PublicProduct = {
   id: number
@@ -13,7 +13,7 @@ export type PublicProduct = {
   stock: number
   image: string
   category: { name: string }
-  seller: { name: string }
+  seller: { id: number; name: string }
   _count: { reviews: number }
 }
 
@@ -89,10 +89,11 @@ export default function PublicProductCard({ product, isWishlisted = false, compa
           </div>
           <p className="text-sm font-semibold text-[#2D1F1A] mb-1">Sign in required</p>
           <p className="text-xs text-[#9E8079] text-center mb-4">Please sign in to add items to your cart or wishlist.</p>
-          <Link href="/auth/login"
+          <button
+            onClick={() => { setLoginPrompt(false); window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { tab: 'login' } })) }}
             className="px-5 py-2 bg-[#C8896A] text-white text-xs font-semibold rounded-xl hover:bg-[#A8694A] transition-colors">
             Sign In
-          </Link>
+          </button>
           <button onClick={() => setLoginPrompt(false)}
             className="mt-2 text-xs text-[#9E8079] hover:text-[#2D1F1A] transition-colors">
             Dismiss
@@ -167,11 +168,19 @@ export default function PublicProductCard({ product, isWishlisted = false, compa
 
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="font-bold text-[#2D1F1A] text-base">${displayPrice.toFixed(2)}</span>
+          <span className="font-bold text-[#2D1F1A] text-base">{formatPrice(displayPrice)}</span>
           {hasSale && (
-            <span className="text-xs text-[#9E8079] line-through">${product.price.toFixed(2)}</span>
+            <span className="text-xs text-[#9E8079] line-through">{formatPrice(product.price)}</span>
           )}
         </div>
+
+        {/* Chat with seller */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('open-chat', { detail: { userId: product.seller.id, name: product.seller.name, role: 'SELLER' } }))}
+          className="w-full py-2 text-xs font-medium text-[#9E8079] hover:text-[#C8896A] border border-[#EAE3DC] hover:border-[#C8896A]/40 rounded-xl transition-colors flex items-center justify-center gap-1.5 mb-2"
+        >
+          <MessageCircle size={12} /> Chat with Seller
+        </button>
 
         {/* Add to cart */}
         <button

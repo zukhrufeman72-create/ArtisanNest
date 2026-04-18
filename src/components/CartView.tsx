@@ -6,6 +6,7 @@ import {
   ShoppingCart, Trash2, Plus, Minus, Package,
   ArrowRight, ShoppingBag, Loader2, Tag,
 } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 
 type CartProduct = {
   id: number
@@ -44,7 +45,7 @@ export default function CartView({ initialItems, initialTotal }: Props) {
     return s + (item.product.discountPrice ?? item.product.price) * item.quantity
   }, 0)
   const itemCount = items.reduce((s, item) => s + item.quantity, 0)
-  const shipping = subtotal >= 59 ? 0 : 5.99
+  const shipping = subtotal >= 2000 ? 0 : 250
 
   async function updateQuantity(itemId: number, newQty: number) {
     if (newQty < 1) { removeItem(itemId); return }
@@ -176,12 +177,12 @@ export default function CartView({ initialItems, initialTotal }: Props) {
 
                   {/* Price */}
                   <div className="text-right">
-                    <p className="font-bold text-[#2D1F1A]">${itemTotal.toFixed(2)}</p>
+                    <p className="font-bold text-[#2D1F1A]">{formatPrice(itemTotal)}</p>
                     {item.quantity > 1 && (
-                      <p className="text-[10px] text-[#9E8079]">${price.toFixed(2)} each</p>
+                      <p className="text-[10px] text-[#9E8079]">{formatPrice(price)} each</p>
                     )}
                     {item.product.discountPrice && (
-                      <p className="text-[10px] text-rose-400 line-through">${(item.product.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-[10px] text-rose-400 line-through">{formatPrice(item.product.price * item.quantity)}</p>
                     )}
                   </div>
                 </div>
@@ -199,18 +200,18 @@ export default function CartView({ initialItems, initialTotal }: Props) {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between text-[#6B4C3B]">
               <span>Subtotal ({itemCount} item{itemCount !== 1 ? 's' : ''})</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <span className="font-medium">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between text-[#6B4C3B]">
               <span>Shipping</span>
               {shipping === 0
                 ? <span className="text-[#7D9B76] font-semibold">Free</span>
-                : <span className="font-medium">${shipping.toFixed(2)}</span>
+                : <span className="font-medium">{formatPrice(shipping)}</span>
               }
             </div>
             {shipping > 0 && (
               <p className="text-[11px] text-[#9E8079] bg-[#F5F2EF] rounded-lg px-3 py-2">
-                Add ${(59 - subtotal).toFixed(2)} more for free shipping
+                Add {formatPrice(2000 - subtotal)} more for free shipping
               </p>
             )}
           </div>
@@ -218,7 +219,7 @@ export default function CartView({ initialItems, initialTotal }: Props) {
           <div className="border-t border-[#EAE3DC] mt-4 pt-4">
             <div className="flex justify-between font-bold text-[#2D1F1A] text-base">
               <span>Total</span>
-              <span>${(subtotal + shipping).toFixed(2)}</span>
+              <span>{formatPrice(subtotal + shipping)}</span>
             </div>
           </div>
 
@@ -237,7 +238,7 @@ export default function CartView({ initialItems, initialTotal }: Props) {
 
           {/* Trust badges */}
           <div className="mt-5 pt-4 border-t border-[#EAE3DC] space-y-2">
-            {['🔒 Secure checkout', '🚚 Free shipping over $59', '↩️ Easy returns'].map((badge) => (
+            {['🔒 Secure checkout', '🚚 Free shipping over Rs. 2,000', '↩️ Easy returns'].map((badge) => (
               <p key={badge} className="text-[11px] text-[#9E8079] flex items-center gap-2">{badge}</p>
             ))}
           </div>

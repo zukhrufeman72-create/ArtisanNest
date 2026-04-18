@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, Search, ChevronDown, User, LogOut, ExternalLink, X } from 'lucide-react'
+import { Menu, Search, ChevronDown, User, LogOut, ExternalLink, X, MessageCircle } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import NotificationBell from '@/components/ui/NotificationBell'
 
@@ -76,6 +76,14 @@ export default function SellerHeader({ sellerName, sellerEmail, onMenuClick }: P
         <div className="flex items-center gap-1">
           <NotificationBell accentColor="#7D9B76" />
 
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-messenger', { detail: {} }))}
+            className="relative p-2 rounded-xl text-[#6B4C3B] hover:bg-[#F5EFE6] transition-colors"
+            title="Messages"
+          >
+            <MessageCircle size={18} />
+          </button>
+
           <Link href="/" target="_blank"
             className="hidden sm:flex p-2 rounded-xl text-[#6B4C3B] hover:bg-[#F5EFE6] transition-colors group" title="Visit store">
             <ExternalLink size={18} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 duration-200" />
@@ -118,6 +126,12 @@ export default function SellerHeader({ sellerName, sellerEmail, onMenuClick }: P
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] transition-colors">
                     <User size={15} className="text-[#9E8079]" /> My Profile
                   </Link>
+                  <button
+                    onClick={() => { setDropdownOpen(false); window.dispatchEvent(new CustomEvent('open-messenger', { detail: {} })) }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] transition-colors text-left"
+                  >
+                    <MessageCircle size={15} className="text-[#9E8079]" /> Messages
+                  </button>
                   <Link href="/" target="_blank" onClick={() => setDropdownOpen(false)}
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] transition-colors">
                     <ExternalLink size={15} className="text-[#9E8079]" /> Visit Store

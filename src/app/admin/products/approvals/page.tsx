@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { approveProduct, rejectProduct } from '@/app/actions/admin'
 import { Package, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 
 export default async function ApprovalsPage() {
   const pending = await prisma.product.findMany({
@@ -84,9 +85,9 @@ export default async function ApprovalsPage() {
                       <p className="text-sm text-[#9E8079] mt-0.5 leading-relaxed max-w-lg">{product.shortDescription}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-lg font-bold text-[#2D1F1A]">${product.price.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-[#2D1F1A]">{formatPrice(product.price)}</p>
                       {product.discountPrice && (
-                        <p className="text-xs text-[#7D9B76] font-semibold">Sale: ${product.discountPrice.toFixed(2)}</p>
+                        <p className="text-xs text-[#7D9B76] font-semibold">Sale: {formatPrice(product.discountPrice)}</p>
                       )}
                     </div>
                   </div>

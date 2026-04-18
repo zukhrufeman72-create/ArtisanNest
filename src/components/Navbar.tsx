@@ -5,15 +5,16 @@ import Link from "next/link"
 import { logout } from "@/app/actions/auth"
 import {
   ShoppingBag, Heart, Search, Menu, X, ChevronDown,
-  User, Package, LogOut, LayoutDashboard, ShoppingCart,
+  User, Package, LogOut, LayoutDashboard, ShoppingCart, MessageCircle,
 } from "lucide-react"
+import AuthModal from "./AuthModal"
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Shop", href: "#products" },
-  { label: "Categories", href: "#categories" },
-  { label: "About", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "Shop", href: "/#products" },
+  { label: "Categories", href: "/#categories" },
+  { label: "Contact", href: "/contact" },
+  { label: "Support", href: "/support" },
 ]
 
 type NavbarProps = {
@@ -26,6 +27,7 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [cartCount, setCartCount] = useState(initialCartCount)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [authModal, setAuthModal] = useState<{ open: boolean; tab: 'login' | 'register' }>({ open: false, tab: 'login' })
   const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -42,6 +44,16 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
     }
     window.addEventListener("cart-updated", handler)
     return () => window.removeEventListener("cart-updated", handler)
+  }, [])
+
+  // Listen for open-auth-modal events from anywhere in the app
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent<{ tab: 'login' | 'register' }>).detail?.tab ?? 'login'
+      setAuthModal({ open: true, tab })
+    }
+    window.addEventListener("open-auth-modal", handler)
+    return () => window.removeEventListener("open-auth-modal", handler)
   }, [])
 
   // Close profile dropdown on outside click
@@ -64,10 +76,11 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
     user?.role === "SELLER" ? "/seller/dashboard" : "#"
 
   return (
+    <>
     <header className="sticky top-0 z-50">
       {/* Announcement bar */}
       <div className="bg-[#C8896A] text-white text-xs py-2 text-center tracking-wide font-medium">
-        🌿&nbsp; Free shipping on orders over $59 &nbsp;·&nbsp; Handmade with love worldwide &nbsp;🌿
+        🌿&nbsp; Free shipping on orders over Rs. 2,000 &nbsp;·&nbsp; Handmade with love worldwide &nbsp;🌿
       </div>
 
       <nav className={`transition-all duration-300 ${scrolled ? "bg-white shadow-sm" : "bg-white/90 backdrop-blur-md"}`}>
@@ -112,12 +125,31 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
               </button>
 
               {/* Wishlist */}
-              <Link
-                href={user ? "/wishlist" : "/auth/login"}
-                className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#F5EFE6] transition-colors text-[#6B4C3B] hover:text-rose-500"
-              >
-                <Heart size={18} />
-              </Link>
+              {user ? (
+                <Link
+                  href="/wishlist"
+                  className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#F5EFE6] transition-colors text-[#6B4C3B] hover:text-rose-500"
+                >
+                  <Heart size={18} />
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setAuthModal({ open: true, tab: 'login' })}
+                  className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#F5EFE6] transition-colors text-[#6B4C3B] hover:text-rose-500"
+                >
+                  <Heart size={18} />
+                </button>
+              )}
+
+              {/* Messages */}
+              {user && (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-messenger', { detail: {} }))}
+                  className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#F5EFE6] transition-colors text-[#6B4C3B] hover:text-[#C8896A]"
+                >
+                  <MessageCircle size={18} />
+                </button>
+              )}
 
               {/* Cart */}
               <Link
@@ -188,6 +220,12 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                             <Package size={15} /> My Orders
                           </Link>
                         )}
+                        <button
+                          onClick={() => { setProfileOpen(false); window.dispatchEvent(new CustomEvent('open-messenger', { detail: {} })) }}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] hover:text-[#C8896A] transition-colors text-left"
+                        >
+                          <MessageCircle size={15} /> Messages
+                        </button>
                         <Link
                           href="/cart"
                           onClick={() => setProfileOpen(false)}
@@ -224,12 +262,12 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/auth/login"
+                <button
+                  onClick={() => setAuthModal({ open: true, tab: 'login' })}
                   className="hidden lg:flex items-center gap-1.5 ml-2 px-5 py-2.5 bg-[#C8896A] hover:bg-[#A8694A] text-white text-sm font-semibold rounded-full transition-all duration-200 hover:shadow-md hover:-translate-y-px"
                 >
                   <User size={15} /> Sign In
-                </Link>
+                </button>
               )}
 
               {/* Hamburger */}
@@ -274,6 +312,12 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                       <LayoutDashboard size={15} /> Dashboard
                     </Link>
                   )}
+                  <button
+                    onClick={() => { setIsOpen(false); window.dispatchEvent(new CustomEvent('open-messenger', { detail: {} })) }}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 bg-[#F5EFE6] text-[#6B4C3B] text-sm font-semibold rounded-xl hover:bg-[#E8D5C4] transition-colors text-left"
+                  >
+                    <MessageCircle size={15} /> Messages
+                  </button>
                   <Link href="/cart" onClick={() => setIsOpen(false)}
                     className="flex items-center gap-2 w-full px-4 py-2.5 bg-[#F5EFE6] text-[#6B4C3B] text-sm font-semibold rounded-xl hover:bg-[#E8D5C4] transition-colors">
                     <ShoppingCart size={15} /> Cart {cartCount > 0 && `(${cartCount})`}
@@ -287,10 +331,12 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                 </div>
               ) : (
                 <div className="px-4 pt-3">
-                  <Link href="/auth/login" onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-[#C8896A] text-white text-sm font-semibold rounded-full hover:bg-[#A8694A] transition-colors">
+                  <button
+                    onClick={() => { setIsOpen(false); setAuthModal({ open: true, tab: 'login' }) }}
+                    className="flex items-center justify-center gap-2 w-full px-5 py-2.5 bg-[#C8896A] text-white text-sm font-semibold rounded-full hover:bg-[#A8694A] transition-colors"
+                  >
                     <User size={15} /> Sign In
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -298,5 +344,12 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
         </div>
       </nav>
     </header>
+
+    <AuthModal
+      open={authModal.open}
+      defaultTab={authModal.tab}
+      onClose={() => setAuthModal((v) => ({ ...v, open: false }))}
+    />
+    </>
   )
 }

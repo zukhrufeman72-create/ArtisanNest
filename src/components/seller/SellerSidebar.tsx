@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShoppingBag, Warehouse,
   TrendingUp, Star, User, LogOut, ChevronDown,
-  PlusCircle, List, X,
+  MessageCircle, X,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -57,7 +57,7 @@ export default function SellerSidebar({ isOpen, onClose }: Props) {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 w-[260px] bg-[#111918] z-30 flex flex-col
+      className={`fixed inset-y-0 left-0 w-65 bg-[#111918] z-30 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
     >
