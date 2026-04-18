@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(npx prisma *)",
-      "Bash(node -e \"const {PrismaClient} = require\\('@prisma/client'\\); const p = new PrismaClient\\(\\); console.log\\('instantiation ok'\\)\")"
+      "Bash(node -e \"const {PrismaClient} = require\\('@prisma/client'\\); const p = new PrismaClient\\(\\); console.log\\('instantiation ok'\\)\")",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const {PrismaClient} = require\\('@prisma/client'\\); const p = new PrismaClient\\(\\); console.log\\(typeof p.verificationToken\\);\")"
     ]
   }
 }

@@ -38,11 +38,12 @@ model User {
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  products Product[]  @relation("SellerProducts")
-  cart     Cart?
-  orders   Order[]
-  reviews  Review[]
-  wishlist Wishlist[]
+  products      Product[]      @relation("SellerProducts")
+  cart          Cart?
+  orders        Order[]
+  reviews       Review[]
+  wishlist      Wishlist[]
+  notifications Notification[]
 }
 
 ///////////////////////
@@ -174,4 +175,34 @@ model Wishlist {
   product Product @relation(fields: [productId], references: [id])
 
   @@unique([userId, productId])
+}
+
+///////////////////////
+// VERIFICATION TOKENS
+///////////////////////
+
+///////////////////////
+// NOTIFICATIONS
+///////////////////////
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  type      String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  // null = admin-wide; set = user-specific (seller)
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id])
+}
+
+model VerificationToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

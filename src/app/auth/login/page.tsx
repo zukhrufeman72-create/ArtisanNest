@@ -50,8 +50,22 @@ export default function LoginPage() {
 
           {/* Error message */}
           {state?.message && (
-            <div className="mb-6 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm">
-              {state.message}
+            <div className="mb-6">
+              <div className="px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm">
+                {state.message}
+              </div>
+              {/* Show resend link for unverified sellers */}
+              {state.email && (
+                <div className="mt-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm flex items-center justify-between gap-2">
+                  <span>Email not verified?</span>
+                  <Link
+                    href={`/auth/verify-email/pending?email=${encodeURIComponent(state.email)}`}
+                    className="font-semibold underline hover:text-amber-900 transition-colors shrink-0"
+                  >
+                    Resend link →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

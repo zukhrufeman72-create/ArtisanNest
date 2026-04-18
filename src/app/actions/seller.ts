@@ -5,6 +5,7 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import bcrypt from 'bcryptjs'
+import { notifyAdmin } from '@/lib/notifications'
 
 export async function addProduct(formData: FormData) {
   const session = await verifySession()
@@ -40,6 +41,15 @@ export async function addProduct(formData: FormData) {
       isActive: true,
     },
   })
+
+  try {
+    await notifyAdmin({
+      type: 'PRODUCT_SUBMITTED',
+      title: '🆕 New Product Submitted',
+      body: `A seller submitted "${name}" for review. Approve or reject it in the Products section.`,
+      link: '/admin/products/approvals',
+    })
+  } catch {}
 
   revalidatePath('/seller/products')
   redirect('/seller/products')
