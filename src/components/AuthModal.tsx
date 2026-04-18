@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useActionState } from 'react'
 import { X, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { login, register } from '@/app/actions/auth'
 
 type Props = {

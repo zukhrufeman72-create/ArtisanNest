@@ -22,7 +22,7 @@ export default async function Home() {
         id: true, name: true, shortDescription: true,
         price: true, discountPrice: true, stock: true, image: true,
         category: { select: { name: true } },
-        seller: { select: { name: true } },
+        seller: { select: { id: true, name: true } },
         _count: { select: { reviews: true } },
       },
     }),

@@ -73,7 +73,7 @@ export async function adminUpdateProduct(formData: FormData) {
   const isApproved = formData.get('isApproved') === 'true'
 
   if (!name || !shortDescription || isNaN(price) || isNaN(stock) || isNaN(categoryId)) {
-    return { error: 'Please fill in all required fields.' }
+    return
   }
 
   await prisma.product.update({

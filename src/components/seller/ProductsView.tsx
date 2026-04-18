@@ -13,7 +13,7 @@ import {
 type Product = {
   id: number; name: string; shortDescription: string; price: number
   discountPrice: number | null; stock: number; image: string
-  isApproved: boolean; isActive: boolean; createdAt: string
+  isApproved: boolean; isActive: boolean; createdAt: Date | string
   category: { id: number; name: string }
 }
 type Category = { id: number; name: string }
