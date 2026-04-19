@@ -4,6 +4,8 @@ import {
   sellerVerificationTemplate,
   customerWelcomeTemplate,
   adminNotificationTemplate,
+  orderConfirmationTemplate,
+  orderStatusUpdateTemplate,
 } from './email-templates'
 
 const APP_URL = process.env.APP_URL || 'http://localhost:3000'
@@ -51,6 +53,50 @@ export async function sendCustomerWelcomeEmail(email: string, name: string) {
     to: email,
     subject: '🎉 Welcome to ArtisanNest!',
     html: customerWelcomeTemplate(name, APP_URL),
+  })
+}
+
+export async function sendOrderConfirmationEmail(
+  email: string,
+  name: string,
+  orderId: number,
+  items: { name: string; quantity: number; price: number }[],
+  subtotal: number,
+  shippingFee: number,
+  tax: number,
+  discount: number,
+  total: number,
+  paymentMethod: string,
+  shippingMethod: string,
+  shippingAddress: string,
+  orderNotes: string | null,
+) {
+  await sendMail({
+    to: email,
+    subject: `✅ Order Confirmed #${orderId} — ArtisanNest`,
+    html: orderConfirmationTemplate(
+      name, orderId, items, subtotal, shippingFee, tax, discount, total,
+      paymentMethod, shippingMethod, shippingAddress, orderNotes, APP_URL,
+    ),
+  })
+}
+
+export async function sendOrderStatusUpdateEmail(
+  email: string,
+  name: string,
+  orderId: number,
+  status: string,
+) {
+  const subjectMap: Record<string, string> = {
+    PAID: `✅ Payment Confirmed — Order #${orderId}`,
+    SHIPPED: `🚚 Your Order #${orderId} is Shipped!`,
+    DELIVERED: `📦 Order #${orderId} Delivered!`,
+    CANCELLED: `❌ Order #${orderId} Cancelled`,
+  }
+  await sendMail({
+    to: email,
+    subject: subjectMap[status] ?? `🔔 Order #${orderId} Update — ArtisanNest`,
+    html: orderStatusUpdateTemplate(name, orderId, status, APP_URL),
   })
 }
 

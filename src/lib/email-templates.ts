@@ -302,6 +302,287 @@ export function adminNotificationTemplate(
   return emailWrapper(`New ${roleLabel} registered: ${userName} (${userEmail})`, content)
 }
 
+// ─── Order Confirmation Email ─────────────────────────────────────────────────
+
+type OrderItem = { name: string; quantity: number; price: number }
+
+export function orderConfirmationTemplate(
+  name: string,
+  orderId: number,
+  items: OrderItem[],
+  subtotal: number,
+  shippingFee: number,
+  tax: number,
+  discount: number,
+  total: number,
+  paymentMethod: string,
+  shippingMethod: string,
+  shippingAddress: string,
+  orderNotes: string | null,
+  appUrl: string,
+): string {
+  const fmt = (n: number) => `Rs. ${Math.round(n).toLocaleString('en-PK')}`
+  const payLabel = paymentMethod === 'COD' ? 'Cash on Delivery' : 'Card Payment (Stripe)'
+  const shipLabel = shippingMethod === 'EXPRESS' ? 'Express (2–3 days)' : 'Standard (5–7 days)'
+
+  const itemRows = items.map((item) => `
+    <tr>
+      <td style="padding:12px 20px;border-bottom:1px solid ${brand.border};">
+        <div style="font-size:14px;font-weight:600;color:${brand.text};">${item.name}</div>
+        <div style="font-size:12px;color:${brand.muted};margin-top:2px;">Qty: ${item.quantity}</div>
+      </td>
+      <td style="padding:12px 20px;border-bottom:1px solid ${brand.border};text-align:right;font-size:14px;font-weight:600;color:${brand.text};">
+        ${fmt(item.price * item.quantity)}
+      </td>
+    </tr>`).join('')
+
+  const summaryRows = [
+    { label: 'Subtotal', value: fmt(subtotal) },
+    { label: `Shipping (${shipLabel})`, value: shippingFee === 0 ? '<span style="color:#7D9B76;font-weight:700;">Free</span>' : fmt(shippingFee) },
+    { label: 'Tax (10%)', value: fmt(tax) },
+    ...(discount > 0 ? [{ label: 'Coupon Discount', value: `<span style="color:#7D9B76;">−${fmt(discount)}</span>` }] : []),
+  ].map((row) => `
+    <tr>
+      <td style="padding:8px 20px;font-size:13px;color:${brand.muted};">${row.label}</td>
+      <td style="padding:8px 20px;font-size:13px;text-align:right;">${row.value}</td>
+    </tr>`).join('')
+
+  const content = `
+    <!-- Hero -->
+    <div style="background:linear-gradient(135deg,${brand.primary}18,${brand.green}12);padding:44px 32px 36px;text-align:center;">
+      <div style="font-size:52px;margin-bottom:16px;">🎉</div>
+      <h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:${brand.text};letter-spacing:-0.5px;">
+        Order Confirmed!
+      </h1>
+      <p style="margin:0;font-size:15px;color:#6B4C3B;line-height:1.5;">
+        Thank you, <strong>${name}</strong>. We've received your order.
+      </p>
+      <div style="display:inline-block;margin-top:16px;background:white;border:1px solid ${brand.border};border-radius:50px;padding:8px 22px;">
+        <span style="font-size:12px;color:${brand.muted};">Order </span>
+        <span style="font-size:14px;font-weight:700;color:${brand.primary};font-family:monospace;">#${orderId}</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:32px 32px 8px;">
+      <p style="margin:0 0 24px;font-size:15px;color:#6B4C3B;line-height:1.7;">
+        Hi <strong>${name}</strong> 👋,<br/>
+        Your order has been placed successfully and is now being processed.
+        We'll notify you as soon as there's an update.
+      </p>
+    </div>
+
+    <!-- Items table -->
+    <div style="margin:0 32px 24px;">
+      <div style="font-size:11px;font-weight:700;color:${brand.muted};text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">
+        Items Ordered
+      </div>
+      <div style="border:1px solid ${brand.border};border-radius:12px;overflow:hidden;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          ${itemRows}
+          ${summaryRows}
+          <tr style="background:${brand.bg};">
+            <td style="padding:14px 20px;font-size:15px;font-weight:700;color:${brand.text};">Total</td>
+            <td style="padding:14px 20px;font-size:18px;font-weight:700;color:${brand.primary};text-align:right;">${fmt(total)}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Info cards -->
+    <div style="margin:0 32px 28px;display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:180px;background:${brand.bg};border:1px solid ${brand.border};border-radius:12px;padding:16px 18px;">
+        <div style="font-size:11px;color:${brand.muted};text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:8px;">Payment</div>
+        <div style="font-size:13px;font-weight:600;color:${brand.text};">💳 ${payLabel}</div>
+        <div style="font-size:11px;color:${brand.muted};margin-top:4px;">${paymentMethod === 'COD' ? 'Pay on delivery' : 'Payment confirmed'}</div>
+      </div>
+      <div style="flex:1;min-width:180px;background:${brand.bg};border:1px solid ${brand.border};border-radius:12px;padding:16px 18px;">
+        <div style="font-size:11px;color:${brand.muted};text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:8px;">Shipping</div>
+        <div style="font-size:13px;font-weight:600;color:${brand.text};">🚚 ${shipLabel}</div>
+        <div style="font-size:11px;color:${brand.muted};margin-top:4px;">${shippingAddress}</div>
+      </div>
+    </div>
+
+    ${orderNotes ? `
+    <div style="margin:0 32px 24px;background:#FFFBF0;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px;">
+      <div style="font-size:11px;color:#92400E;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📝 Your Order Notes</div>
+      <div style="font-size:13px;color:#78350F;line-height:1.6;">${orderNotes}</div>
+    </div>` : ''}
+
+    <!-- Status tracker -->
+    <div style="margin:0 32px 32px;">
+      <div style="font-size:11px;font-weight:700;color:${brand.muted};text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;">
+        Order Progress
+      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          ${['Order Placed', 'Confirmed', 'Shipped', 'Delivered'].map((step, i) => `
+          <td style="text-align:center;width:25%;vertical-align:top;">
+            <div style="width:32px;height:32px;border-radius:50%;margin:0 auto 8px;
+              background:${i === 0 ? brand.green : brand.border};
+              border:2px solid ${i === 0 ? brand.green : brand.border};
+              display:flex;align-items:center;justify-content:center;font-size:14px;">
+              ${i === 0 ? '✓' : `<span style="color:${brand.muted};font-size:11px;">${i + 1}</span>`}
+            </div>
+            <div style="font-size:11px;color:${i === 0 ? brand.green : brand.muted};font-weight:${i === 0 ? '700' : '400'};">
+              ${step}
+            </div>
+          </td>`).join('<td style="padding-top:16px;"><div style="height:2px;background:#EAE3DC;"></div></td>')}
+        </tr>
+      </table>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;padding:0 32px 32px;">
+      <a href="${appUrl}/orders"
+         style="display:inline-block;background:${brand.primary};color:white;font-size:14px;font-weight:600;text-decoration:none;padding:14px 40px;border-radius:12px;letter-spacing:0.2px;">
+        🛍️ &nbsp; Track My Order
+      </a>
+      <p style="margin:20px 0 0;font-size:13px;color:${brand.muted};line-height:1.6;">
+        Questions? Reply to this email or visit our store.
+      </p>
+    </div>
+
+    <!-- Footer strip -->
+    <div style="background:${brand.bg};border-top:1px solid ${brand.border};padding:18px 32px;">
+      <p style="margin:0;font-size:12px;color:${brand.muted};text-align:center;">
+        Order #${orderId} · Placed on ${new Date().toLocaleDateString('en-PK', { dateStyle: 'medium' })}
+      </p>
+    </div>
+  `
+  return emailWrapper(`Your ArtisanNest order #${orderId} is confirmed!`, content)
+}
+
+// ─── Order Status Update Email ────────────────────────────────────────────────
+
+const STATUS_META: Record<string, { emoji: string; headline: string; body: string; color: string }> = {
+  PAID: {
+    emoji: '✅',
+    headline: 'Payment Confirmed',
+    body: 'Great news! Your payment has been confirmed and your order is being prepared.',
+    color: '#3B82F6',
+  },
+  SHIPPED: {
+    emoji: '🚚',
+    headline: 'Your Order is on Its Way!',
+    body: 'Your order has been packed and handed over to the courier. Get ready to receive it soon!',
+    color: '#8B5CF6',
+  },
+  DELIVERED: {
+    emoji: '📦',
+    headline: 'Order Delivered!',
+    body: 'Your order has been delivered. We hope you love your handmade items. Please leave a review!',
+    color: '#7D9B76',
+  },
+  CANCELLED: {
+    emoji: '❌',
+    headline: 'Order Cancelled',
+    body: 'Your order has been cancelled. If you have questions, please contact our support team.',
+    color: '#EF4444',
+  },
+}
+
+export function orderStatusUpdateTemplate(
+  name: string,
+  orderId: number,
+  status: string,
+  appUrl: string,
+): string {
+  const meta = STATUS_META[status] ?? {
+    emoji: '🔔',
+    headline: 'Order Update',
+    body: `Your order status has been updated to ${status}.`,
+    color: brand.primary,
+  }
+
+  const steps = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED']
+  const stepLabels = ['Placed', 'Confirmed', 'Shipped', 'Delivered']
+  const currentIdx = steps.indexOf(status)
+
+  const content = `
+    <!-- Hero -->
+    <div style="background:linear-gradient(135deg,${meta.color}18,${meta.color}08);padding:48px 32px 40px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:20px;">${meta.emoji}</div>
+      <h1 style="margin:0 0 10px;font-size:24px;font-weight:700;color:${brand.text};letter-spacing:-0.5px;">
+        ${meta.headline}
+      </h1>
+      <p style="margin:0;font-size:15px;color:#6B4C3B;line-height:1.6;max-width:400px;margin-left:auto;margin-right:auto;">
+        ${meta.body}
+      </p>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:32px;">
+      <p style="margin:0 0 24px;font-size:15px;color:${brand.text};line-height:1.7;">
+        Hi <strong>${name}</strong>,<br/>
+        Here's the latest update on your order <strong style="color:${brand.primary};font-family:monospace;">#${orderId}</strong>.
+      </p>
+
+      <!-- Status badge -->
+      <div style="text-align:center;margin:0 0 32px;">
+        <div style="display:inline-block;background:${meta.color}15;border:2px solid ${meta.color}30;border-radius:50px;padding:10px 28px;">
+          <span style="font-size:14px;font-weight:700;color:${meta.color};">${meta.emoji} &nbsp; ${status.charAt(0) + status.slice(1).toLowerCase()}</span>
+        </div>
+      </div>
+
+      <!-- Progress tracker -->
+      ${status !== 'CANCELLED' ? `
+      <div style="margin-bottom:32px;">
+        <div style="font-size:11px;font-weight:700;color:${brand.muted};text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;text-align:center;">
+          Order Journey
+        </div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            ${stepLabels.map((step, i) => {
+              const done = i <= currentIdx
+              const active = i === currentIdx
+              return `
+              <td style="text-align:center;width:25%;vertical-align:top;">
+                <div style="width:36px;height:36px;border-radius:50%;margin:0 auto 8px;
+                  background:${done ? (active ? meta.color : brand.green) : brand.border};
+                  border:2px solid ${done ? (active ? meta.color : brand.green) : brand.border};
+                  display:flex;align-items:center;justify-content:center;font-size:15px;color:white;">
+                  ${done ? '✓' : `<span style="font-size:11px;color:${brand.muted};">${i + 1}</span>`}
+                </div>
+                <div style="font-size:11px;font-weight:${active ? '700' : '400'};color:${active ? meta.color : (done ? brand.green : brand.muted)};">
+                  ${step}
+                </div>
+              </td>
+              ${i < stepLabels.length - 1 ? `<td style="padding-top:18px;"><div style="height:2px;background:${i < currentIdx ? brand.green : brand.border};"></div></td>` : ''}
+              `
+            }).join('')}
+          </tr>
+        </table>
+      </div>` : `
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:18px 22px;margin-bottom:28px;text-align:center;">
+        <p style="margin:0;font-size:14px;color:#B91C1C;line-height:1.6;">
+          We're sorry for any inconvenience. If you believe this is a mistake,<br/>please contact us immediately.
+        </p>
+      </div>`}
+
+      <!-- CTA -->
+      <div style="text-align:center;margin-bottom:8px;">
+        <a href="${appUrl}/orders"
+           style="display:inline-block;background:${meta.color};color:white;font-size:14px;font-weight:600;text-decoration:none;padding:14px 40px;border-radius:12px;letter-spacing:0.2px;">
+          View My Orders →
+        </a>
+      </div>
+
+      <p style="margin:20px 0 0;font-size:13px;color:${brand.muted};line-height:1.6;text-align:center;">
+        Need help with your order? Reply to this email and we'll assist you.
+      </p>
+    </div>
+
+    <!-- Footer strip -->
+    <div style="background:${brand.bg};border-top:1px solid ${brand.border};padding:18px 32px;">
+      <p style="margin:0;font-size:12px;color:${brand.muted};text-align:center;">
+        Order #${orderId} · ArtisanNest
+      </p>
+    </div>
+  `
+  return emailWrapper(`Order #${orderId} — ${meta.headline}`, content)
+}
+
 // ─── Email Verified Success (for the verify page) ─────────────────────────────
 
 export function verificationSuccessTemplate(name: string, loginUrl: string): string {

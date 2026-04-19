@@ -48,6 +48,7 @@ model User {
   receivedMessages     Message[]      @relation("ReceivedMessages")
   complaintsSubmitted  Complaint[]    @relation("ComplaintUser")
   complaintsReceived   Complaint[]    @relation("ComplaintSeller")
+  coupons              Coupon[]       @relation("SellerCoupons")
 }
 
 ///////////////////////
@@ -121,6 +122,29 @@ model CartItem {
 }
 
 ///////////////////////
+// COUPONS
+///////////////////////
+
+model Coupon {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique
+  discountType   String    // PERCENTAGE or FIXED
+  discountValue  Float
+  minOrderAmount Float     @default(0)
+  expiresAt      DateTime?
+  usageLimit     Int?
+  usageCount     Int       @default(0)
+  isActive       Boolean   @default(true)
+  description    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  sellerId Int
+  seller   User    @relation("SellerCoupons", fields: [sellerId], references: [id])
+  orders   Order[] @relation("OrderCoupon")
+}
+
+///////////////////////
 // ORDERS
 ///////////////////////
 
@@ -128,11 +152,34 @@ model Order {
   id         Int         @id @default(autoincrement())
   userId     Int
   totalPrice Float
+  subtotal   Float       @default(0)
+  shippingFee Float      @default(0)
+  tax        Float       @default(0)
+  discount   Float       @default(0)
   status     OrderStatus @default(PENDING)
-  createdAt  DateTime    @default(now())
 
-  user  User        @relation(fields: [userId], references: [id])
-  items OrderItem[]
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+
+  shippingMethod  String?
+  shippingAddress String?  @db.Text
+  addressLabel    String?
+
+  paymentMethod   String?
+  paymentStatus   String   @default("PENDING")
+  stripePaymentId String?
+
+  couponId   Int?
+  couponCode String?
+
+  orderNotes String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  user   User        @relation(fields: [userId], references: [id])
+  items  OrderItem[]
+  coupon Coupon?     @relation("OrderCoupon", fields: [couponId], references: [id])
 }
 
 ///////////////////////

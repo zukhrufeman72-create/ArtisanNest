@@ -47,6 +47,8 @@ export default function NotificationBell({ accentColor = '#C8896A' }: { accentCo
     try {
       const res = await fetch('/api/notifications')
       if (res.ok) setNotifications(await res.json())
+    } catch {
+      // Network error — silent fail, bell stays empty
     } finally {
       setLoading(false)
     }

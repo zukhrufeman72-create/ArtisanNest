@@ -223,11 +223,12 @@ export default function CartView({ initialItems, initialTotal }: Props) {
             </div>
           </div>
 
-          <button
+          <Link
+            href="/checkout"
             className="mt-5 w-full py-3.5 bg-[#C8896A] hover:bg-[#A8694A] text-white text-sm font-semibold rounded-xl transition-all hover:shadow-md hover:-translate-y-px flex items-center justify-center gap-2"
           >
             Proceed to Checkout <ArrowRight size={16} />
-          </button>
+          </Link>
 
           <Link
             href="/#products"
