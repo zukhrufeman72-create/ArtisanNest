@@ -14,7 +14,7 @@ import SellerOrderStatusUpdate from '@/components/seller/SellerOrderStatusUpdate
 
 type OrderItem = {
   id: number; quantity: number; price: number
-  product: { id: number; name: string; image: string }
+  product: { id: number; name: string; image: string | null }
 }
 
 type Order = {

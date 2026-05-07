@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Package, ShoppingBag,
   BarChart3, MessageSquare, Settings, LogOut,
-  ChevronDown, X,
+  ChevronDown, X, Store, Receipt, Truck,
+  RefreshCw, Tag, Shield, UserCheck, ClipboardList, ScrollText, Activity,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -37,6 +38,16 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { label: 'Orders', icon: ShoppingBag, href: '/admin/orders' },
+  { label: 'Shops', icon: Store, href: '/admin/shops' },
+  { label: 'Transactions', icon: Receipt, href: '/admin/transactions' },
+  { label: 'Delivery Tracking', icon: Truck, href: '/admin/delivery-tracking' },
+  { label: 'Refunds', icon: RefreshCw, href: '/admin/refunds' },
+  { label: 'Deals & Sales', icon: Tag, href: '/admin/deals' },
+  { label: 'Custom Orders', icon: ClipboardList, href: '/admin/custom-orders' },
+  { label: 'Seller Approval', icon: UserCheck, href: '/admin/sellers' },
+  { label: 'Sub-Admins', icon: Shield, href: '/admin/sub-admins' },
+  { label: 'Audit Logs', icon: ScrollText, href: '/admin/audit-logs' },
+  { label: 'Analytics', icon: Activity, href: '/admin/analytics' },
   { label: 'Reports', icon: BarChart3, href: '/admin/reports' },
   { label: 'Complaints', icon: MessageSquare, href: '/admin/complaints' },
   { label: 'Settings', icon: Settings, href: '/admin/settings' },
@@ -65,7 +76,7 @@ export default function AdminSidebar({ isOpen, onClose }: Props) {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 w-[260px] bg-[#1C1511] z-30 flex flex-col
+      className={`fixed inset-y-0 left-0 w-65 bg-[#1C1511] z-30 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
     >

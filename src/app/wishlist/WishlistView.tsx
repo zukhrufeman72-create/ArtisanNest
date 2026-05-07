@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Heart, ShoppingCart, MessageCircle, Package, Trash2, Star } from 'lucide-react'
@@ -11,7 +11,7 @@ type WishlistProduct = {
   shortDescription: string
   price: number
   discountPrice: number | null
-  image: string
+  image: string | null
   stock: number
   isApproved: boolean
   isActive: boolean
@@ -86,7 +86,7 @@ export default function WishlistView({ initialItems }: Props) {
             {/* Image */}
             <div className="relative h-52 bg-[#F5F2EF] overflow-hidden">
               {p.image ? (
-                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={p.image ?? undefined} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Package size={32} className="text-[#C4AEA4]" />

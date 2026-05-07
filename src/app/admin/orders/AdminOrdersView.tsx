@@ -13,7 +13,7 @@ import { formatPrice } from '@/lib/currency'
 
 type OrderItem = {
   id: number; quantity: number; price: number
-  product: { id: number; name: string; image: string; seller: { name: string } | null }
+  product: { id: number; name: string; image: string | null; seller: { name: string } | null }
 }
 
 type Order = {

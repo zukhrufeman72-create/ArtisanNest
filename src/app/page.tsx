@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { getOptionalSession } from '@/lib/dal'
 import NavbarWrapper from "@/components/NavbarWrapper"
 import Hero from "@/components/Hero"
+import DealsBanner from "@/components/DealsBanner"
 import FeaturedProducts from "@/components/FeaturedProducts"
 import Categories from "@/components/Categories"
 import TrendingSection from "@/components/TrendingSection"
@@ -42,6 +43,7 @@ export default async function Home() {
       <NavbarWrapper />
       <main>
         <Hero />
+        <DealsBanner />
         <FeaturedProducts products={dbProducts} wishlistIds={wishlistIds} />
         <Categories categories={dbCategories} />
         <TrendingSection products={dbProducts.slice(0, 4)} wishlistIds={wishlistIds} />

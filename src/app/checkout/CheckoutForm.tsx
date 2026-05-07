@@ -78,7 +78,7 @@ const CARD_ELEMENT_OPTIONS = {
 
 type CartProduct = {
   id: number; name: string; price: number; discountPrice: number | null
-  image: string; stock: number
+  image: string | null; stock: number
   seller: { name: string }; category: { name: string }
 }
 type CartItem = { id: number; quantity: number; product: CartProduct }

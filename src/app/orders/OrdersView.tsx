@@ -1,11 +1,11 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
 import {
   ShoppingBag, Package, ChevronDown, ChevronUp,
   MapPin, CreditCard, Truck, Tag, FileText,
-  CheckCircle2, Clock, Zap, XCircle, Banknote,
+  CheckCircle2, Clock, Zap, XCircle, Banknote, Navigation,
 } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
 
@@ -14,7 +14,7 @@ import { formatPrice } from '@/lib/currency'
 type OrderProduct = {
   id: number
   name: string
-  image: string
+  image: string | null
   seller: { name: string }
 }
 
@@ -120,6 +120,13 @@ function OrderCard({ order }: { order: Order }) {
             <p className="font-bold text-[#2D1F1A]">{formatPrice(order.totalPrice)}</p>
             <p className="text-xs text-[#9E8079]">{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
           </div>
+          <Link
+            href={`/orders/${order.id}/tracking`}
+            className="w-9 h-9 rounded-xl border border-[#EAE3DC] flex items-center justify-center text-[#7D9B76] hover:bg-[#7D9B76]/10 transition-colors"
+            title="Track Delivery"
+          >
+            <Navigation size={15} />
+          </Link>
           <button
             onClick={() => setExpanded((v) => !v)}
             className="w-9 h-9 rounded-xl border border-[#EAE3DC] flex items-center justify-center text-[#9E8079] hover:bg-[#F5EFE6] transition-colors"
@@ -138,7 +145,7 @@ function OrderCard({ order }: { order: Order }) {
             title={item.product.name}
           >
             {item.product.image ? (
-              <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+              <img src={item.product.image ?? undefined} alt={item.product.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <Package size={16} className="text-[#C4AEA4]" />
@@ -224,7 +231,7 @@ function OrderCard({ order }: { order: Order }) {
                 <div key={item.id} className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#F5F2EF] shrink-0">
                     {item.product.image ? (
-                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                      <img src={item.product.image ?? undefined} alt={item.product.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Package size={14} className="text-[#C4AEA4]" />

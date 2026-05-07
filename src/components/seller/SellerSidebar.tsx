@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShoppingBag, Warehouse,
   TrendingUp, Star, User, LogOut, ChevronDown,
-  MessageCircle, X, Tag,
+  MessageCircle, X, Tag, Store, Receipt, ClipboardList, History,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -28,10 +28,19 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { label: 'Orders', icon: ShoppingBag, href: '/seller/orders' },
-  { label: 'Inventory', icon: Warehouse, href: '/seller/inventory' },
+  {
+    label: 'Inventory', icon: Warehouse,
+    children: [
+      { label: 'Stock Overview', href: '/seller/inventory' },
+      { label: 'History', href: '/seller/inventory/history' },
+    ],
+  },
+  { label: 'Custom Orders', icon: ClipboardList, href: '/seller/custom-orders' },
+  { label: 'Transactions', icon: Receipt, href: '/seller/transactions' },
   { label: 'Earnings', icon: TrendingUp, href: '/seller/earnings' },
   { label: 'Coupons', icon: Tag, href: '/seller/coupons' },
   { label: 'Reviews', icon: Star, href: '/seller/reviews' },
+  { label: 'Shop Profile', icon: Store, href: '/seller/shop' },
   { label: 'Profile', icon: User, href: '/seller/profile' },
 ]
 

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+﻿import { prisma } from '@/lib/prisma'
 import { approveProduct, rejectProduct } from '@/app/actions/admin'
 import { Package, CheckCircle, XCircle, Search, Pencil } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
@@ -179,7 +179,7 @@ export default async function AllProductsPage({
                         <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#F5F2EF] shrink-0 border border-[#EAE3DC]">
                           {product.image ? (
                             <img
-                              src={product.image}
+                              src={product.image ?? undefined}
                               alt={product.name}
                               className="w-full h-full object-cover"
                             />

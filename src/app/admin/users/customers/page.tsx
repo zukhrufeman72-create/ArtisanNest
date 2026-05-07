@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { ShoppingBag } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 
 export default async function CustomersPage() {
   const customers = await prisma.user.findMany({
@@ -68,7 +69,7 @@ export default async function CustomersPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3.5 font-semibold text-[#2D1F1A]">
-                        ${totalSpent.toFixed(2)}
+                        {formatPrice(totalSpent)}
                       </td>
                       <td className="px-5 py-3.5 text-[#9E8079] text-xs">
                         {new Date(customer.createdAt).toLocaleDateString()}

@@ -1,7 +1,8 @@
 import { verifySession } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 import { EarningsAreaChart, EarningsBarChart } from '@/components/seller/SellerEarningsChart'
-import { TrendingUp, ShoppingBag, Package, DollarSign } from 'lucide-react'
+import { TrendingUp, ShoppingBag, Package, Banknote } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -68,10 +69,10 @@ export default async function EarningsPage() {
   const nameMap = Object.fromEntries(productNames.map((p) => [p.id, p.name]))
 
   const summaryCards = [
-    { label: 'Total Earnings', value: `$${totalEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-[#7D9B76] bg-[#7D9B76]/10' },
+    { label: 'Total Earnings', value: formatPrice(totalEarnings), icon: Banknote, color: 'text-[#7D9B76] bg-[#7D9B76]/10' },
     { label: 'Units Sold', value: totalUnitsSold, icon: Package, color: 'text-[#C8896A] bg-[#C8896A]/10' },
-    { label: 'Avg per Item', value: totalUnitsSold > 0 ? `$${(totalEarnings / totalUnitsSold).toFixed(2)}` : '$0', icon: TrendingUp, color: 'text-blue-600 bg-blue-50' },
-    { label: 'This Month', value: `$${chartData[chartData.length - 1]?.revenue.toFixed(2) ?? '0.00'}`, icon: ShoppingBag, color: 'text-purple-600 bg-purple-50' },
+    { label: 'Avg per Item', value: totalUnitsSold > 0 ? formatPrice(totalEarnings / totalUnitsSold) : formatPrice(0), icon: TrendingUp, color: 'text-blue-600 bg-blue-50' },
+    { label: 'This Month', value: formatPrice(chartData[chartData.length - 1]?.revenue ?? 0), icon: ShoppingBag, color: 'text-purple-600 bg-purple-50' },
   ]
 
   return (
@@ -132,7 +133,7 @@ export default async function EarningsPage() {
                     <p className="font-medium text-[#2D1F1A] truncate">{nameMap[p.productId] ?? '—'}</p>
                     <p className="text-xs text-[#9E8079]">{units} unit{units !== 1 ? 's' : ''} sold</p>
                   </div>
-                  <p className="font-bold text-[#7D9B76] shrink-0">${(p._sum.price ?? 0).toFixed(2)}</p>
+                  <p className="font-bold text-[#7D9B76] shrink-0">{formatPrice(p._sum.price ?? 0)}</p>
                 </li>
               )
             })}

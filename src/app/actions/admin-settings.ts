@@ -3,32 +3,30 @@
 import { prisma } from '@/lib/prisma'
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import bcrypt from 'bcryptjs'
+import { nameSchema } from '@/lib/validations'
 
+/**
+ * Update admin display name.
+ * Email and password changes go through the OTP flow in profile.ts.
+ */
 export async function updateAdminProfile(formData: FormData) {
   const session = await verifySession()
-  const name = String(formData.get('name') ?? '').trim()
-  const email = String(formData.get('email') ?? '').trim()
-  const currentPassword = String(formData.get('currentPassword') ?? '').trim()
-  const newPassword = String(formData.get('newPassword') ?? '').trim()
+  if (session.role !== 'ADMIN') return { error: 'Unauthorized.' }
 
-  if (name && email) {
-    await prisma.user.update({
-      where: { id: session.userId },
-      data: { name, email },
-    })
+  const rawName = String(formData.get('name') ?? '').trim()
+  if (!rawName) return { error: 'Name is required.' }
+
+  // Must contain at least one letter — no all-numeric names
+  const parsed = nameSchema.safeParse(rawName)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid name.' }
   }
 
-  if (currentPassword && newPassword) {
-    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { password: true } })
-    if (user) {
-      const valid = await bcrypt.compare(currentPassword, user.password)
-      if (valid) {
-        const hashed = await bcrypt.hash(newPassword, 12)
-        await prisma.user.update({ where: { id: session.userId }, data: { password: hashed } })
-      }
-    }
-  }
+  await prisma.user.update({
+    where: { id: session.userId },
+    data: { name: parsed.data },
+  })
 
   revalidatePath('/admin/settings')
+  return { success: true }
 }

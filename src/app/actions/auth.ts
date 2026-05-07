@@ -4,6 +4,7 @@ import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { randomBytes } from 'crypto'
+import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { createSession, deleteSession } from '@/lib/session'
 import {
@@ -12,24 +13,30 @@ import {
   sendAdminNotification,
 } from '@/lib/email'
 import { notifyAdmin } from '@/lib/notifications'
+import { LoginSchema, RegisterSchema } from '@/lib/validations'
+import { isRateLimited, retryAfterMs } from '@/lib/rate-limit'
 
-const LoginSchema = z.object({
-  email: z.string().email('Please enter a valid email.').trim(),
-  password: z.string().min(1, 'Password is required.'),
-})
-
-const RegisterSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters.').trim(),
-  email: z.string().email('Please enter a valid email.').trim(),
-  password: z.string().min(8, 'Password must be at least 8 characters.'),
-  role: z.enum(['SELLER', 'CUSTOMER']),
-})
+// ── Types ────────────────────────────────────────────────────────────────────
 
 export type FormState =
   | { errors?: Record<string, string[]>; message?: string; success?: boolean; email?: string }
   | undefined
 
+// ── Login (rate-limited: 10 attempts / 15 min per IP) ────────────────────────
+
 export async function login(state: FormState, formData: FormData): Promise<FormState> {
+  // Rate limit by IP address to prevent brute-force attacks
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rateLimitKey = `login:${ip}`
+
+  if (isRateLimited(rateLimitKey, 10, 15 * 60 * 1000)) {
+    const waitSec = Math.ceil(retryAfterMs(rateLimitKey) / 1000)
+    return {
+      message: `Too many login attempts. Please wait ${waitSec} seconds before trying again.`,
+    }
+  }
+
   const validated = LoginSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -40,9 +47,16 @@ export async function login(state: FormState, formData: FormData): Promise<FormS
   }
 
   const { email, password } = validated.data
+
+  // Use a constant-time comparison approach — find user without short-circuiting
   const user = await prisma.user.findUnique({ where: { email } })
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  // Always run bcrypt.compare even on missing user to prevent timing attacks
+  const passwordValid = user
+    ? await bcrypt.compare(password, user.password)
+    : await bcrypt.compare(password, '$2a$10$invalidhashtopreventtimingattack')
+
+  if (!user || !passwordValid) {
     return { message: 'Invalid email or password.' }
   }
 
@@ -56,10 +70,12 @@ export async function login(state: FormState, formData: FormData): Promise<FormS
 
   await createSession(user.id, user.role)
 
-  if (user.role === 'ADMIN') redirect('/admin/dashboard')
+  if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') redirect('/admin/dashboard')
   if (user.role === 'SELLER') redirect('/seller/dashboard')
   redirect('/')
 }
+
+// ── Register ─────────────────────────────────────────────────────────────────
 
 export async function register(state: FormState, formData: FormData): Promise<FormState> {
   const validated = RegisterSchema.safeParse({
@@ -80,7 +96,8 @@ export async function register(state: FormState, formData: FormData): Promise<Fo
     return { errors: { email: ['This email is already registered.'] } }
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10)
+  // Hash with cost factor 12 (stronger than default 10)
+  const hashedPassword = await bcrypt.hash(password, 12)
   const now = new Date()
 
   if (role === 'SELLER') {
@@ -93,7 +110,6 @@ export async function register(state: FormState, formData: FormData): Promise<Fo
     const token = randomBytes(32).toString('hex')
     const expiresAt = new Date(now.getTime() + 60 * 60 * 1000)
 
-    // Remove any existing tokens for this email then store the new one
     await prisma.verificationToken.deleteMany({ where: { email } })
     await prisma.verificationToken.create({ data: { email, token, expiresAt } })
 
@@ -108,7 +124,6 @@ export async function register(state: FormState, formData: FormData): Promise<Fo
       }),
     ])
 
-    // Redirect to "check your inbox" page
     redirect(`/auth/verify-email/pending?email=${encodeURIComponent(email)}`)
   } else {
     // Customers are auto-verified and auto-logged-in
@@ -132,10 +147,14 @@ export async function register(state: FormState, formData: FormData): Promise<Fo
   }
 }
 
+// ── Logout ────────────────────────────────────────────────────────────────────
+
 export async function logout() {
   await deleteSession()
   redirect('/auth/login')
 }
+
+// ── Resend verification ───────────────────────────────────────────────────────
 
 export async function resendVerification(formData: FormData): Promise<FormState> {
   const email = String(formData.get('email') ?? '').trim()
@@ -154,7 +173,6 @@ export async function resendVerification(formData: FormData): Promise<FormState>
     return { message: 'This account is already verified. Please log in.' }
   }
 
-  // Rotate the token
   const token = randomBytes(32).toString('hex')
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000)
   await prisma.verificationToken.deleteMany({ where: { email } })

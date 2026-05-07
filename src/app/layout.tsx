@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Playfair_Display, Inter } from "next/font/google"
 import "./globals.css"
+import VisitorTracker from "@/components/VisitorTracker"
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -29,7 +30,10 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${inter.variable} antialiased`}
     >
-      <body className="min-h-screen flex flex-col font-sans">{children}</body>
+      <body className="min-h-screen flex flex-col font-sans">
+        <VisitorTracker />
+        {children}
+      </body>
     </html>
   )
 }

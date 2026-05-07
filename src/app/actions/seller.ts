@@ -4,8 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import bcrypt from 'bcryptjs'
 import { notifyAdmin } from '@/lib/notifications'
+import { nameSchema } from '@/lib/validations'
 
 export async function addProduct(formData: FormData) {
   const session = await verifySession()
@@ -16,23 +16,21 @@ export async function addProduct(formData: FormData) {
   const discountPriceRaw = String(formData.get('discountPrice')).trim()
   const discountPrice = discountPriceRaw ? parseFloat(discountPriceRaw) : null
   const stock = parseInt(String(formData.get('stock')), 10)
-  const image = String(formData.get('image')).trim()
   const categoryId = parseInt(String(formData.get('categoryId')), 10)
   const material = String(formData.get('material')).trim() || null
   const origin = String(formData.get('origin')).trim() || null
 
-  if (!name || !shortDescription || isNaN(price) || isNaN(stock) || !image || isNaN(categoryId)) {
+  if (!name || !shortDescription || isNaN(price) || isNaN(stock) || isNaN(categoryId)) {
     return { error: 'Please fill in all required fields.' }
   }
 
-  await prisma.product.create({
+  const product = await prisma.product.create({
     data: {
       name,
       shortDescription,
       price,
       discountPrice,
       stock,
-      image,
       material,
       origin,
       sellerId: session.userId,
@@ -52,7 +50,7 @@ export async function addProduct(formData: FormData) {
   } catch {}
 
   revalidatePath('/seller/products')
-  redirect('/seller/products')
+  redirect(`/seller/products/${product.id}/variants`)
 }
 
 export async function updateProduct(formData: FormData) {
@@ -70,14 +68,13 @@ export async function updateProduct(formData: FormData) {
   const discountPriceRaw = String(formData.get('discountPrice')).trim()
   const discountPrice = discountPriceRaw ? parseFloat(discountPriceRaw) : null
   const stock = parseInt(String(formData.get('stock')), 10)
-  const image = String(formData.get('image')).trim()
   const categoryId = parseInt(String(formData.get('categoryId')), 10)
   const material = String(formData.get('material')).trim() || null
   const origin = String(formData.get('origin')).trim() || null
 
   await prisma.product.update({
     where: { id: productId },
-    data: { name, shortDescription, price, discountPrice, stock, image, material, origin, categoryId },
+    data: { name, shortDescription, price, discountPrice, stock, material, origin, categoryId },
   })
 
   revalidatePath('/seller/products')
@@ -113,28 +110,22 @@ export async function updateStock(formData: FormData) {
 
 export async function updateSellerProfile(formData: FormData) {
   const session = await verifySession()
-  const name = String(formData.get('name') ?? '').trim()
-  const email = String(formData.get('email') ?? '').trim()
-  const currentPassword = String(formData.get('currentPassword') ?? '').trim()
-  const newPassword = String(formData.get('newPassword') ?? '').trim()
 
-  if (name && email) {
-    await prisma.user.update({
-      where: { id: session.userId },
-      data: { name, email },
-    })
+  const rawName = String(formData.get('name') ?? '').trim()
+  if (!rawName) return { error: 'Name is required.' }
+
+  // Use shared name validation (must contain at least one letter, no all-numeric names)
+  const parsed = nameSchema.safeParse(rawName)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid name.' }
   }
 
-  if (currentPassword && newPassword) {
-    const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { password: true } })
-    if (user) {
-      const valid = await bcrypt.compare(currentPassword, user.password)
-      if (valid) {
-        const hashed = await bcrypt.hash(newPassword, 12)
-        await prisma.user.update({ where: { id: session.userId }, data: { password: hashed } })
-      }
-    }
-  }
+  await prisma.user.update({
+    where: { id: session.userId },
+    data: { name: parsed.data },
+  })
 
   revalidatePath('/seller/profile')
+  return { success: true }
 }
+

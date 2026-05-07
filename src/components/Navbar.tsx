@@ -8,6 +8,7 @@ import {
   User, Package, LogOut, LayoutDashboard, ShoppingCart, MessageCircle,
 } from "lucide-react"
 import AuthModal from "./AuthModal"
+import NotificationBell from "./NotificationBell"
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -151,6 +152,9 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                 </button>
               )}
 
+              {/* Notifications */}
+              {user && <NotificationBell />}
+
               {/* Cart */}
               <Link
                 href="/cart"
@@ -212,13 +216,22 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                           </Link>
                         )}
                         {user.role === "CUSTOMER" && (
-                          <Link
-                            href="/orders"
-                            onClick={() => setProfileOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] hover:text-[#C8896A] transition-colors"
-                          >
-                            <Package size={15} /> My Orders
-                          </Link>
+                          <>
+                            <Link
+                              href="/profile"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] hover:text-[#C8896A] transition-colors"
+                            >
+                              <User size={15} /> My Profile
+                            </Link>
+                            <Link
+                              href="/orders"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] hover:text-[#C8896A] transition-colors"
+                            >
+                              <Package size={15} /> My Orders
+                            </Link>
+                          </>
                         )}
                         <button
                           onClick={() => { setProfileOpen(false); window.dispatchEvent(new CustomEvent('open-messenger', { detail: {} })) }}
@@ -318,6 +331,12 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                   >
                     <MessageCircle size={15} /> Messages
                   </button>
+                  {user.role === "CUSTOMER" && (
+                    <Link href="/profile" onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 w-full px-4 py-2.5 bg-[#F5EFE6] text-[#6B4C3B] text-sm font-semibold rounded-xl hover:bg-[#E8D5C4] transition-colors">
+                      <User size={15} /> My Profile
+                    </Link>
+                  )}
                   <Link href="/cart" onClick={() => setIsOpen(false)}
                     className="flex items-center gap-2 w-full px-4 py-2.5 bg-[#F5EFE6] text-[#6B4C3B] text-sm font-semibold rounded-xl hover:bg-[#E8D5C4] transition-colors">
                     <ShoppingCart size={15} /> Cart {cartCount > 0 && `(${cartCount})`}

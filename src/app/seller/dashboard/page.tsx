@@ -2,6 +2,7 @@ import { verifySession } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 import { Package, ShoppingBag, TrendingUp, Clock, ArrowUpRight, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
+import { formatPrice } from '@/lib/currency'
 
 export default async function SellerDashboard() {
   const session = await verifySession()
@@ -63,7 +64,7 @@ export default async function SellerDashboard() {
     },
     {
       label: 'Total Earnings',
-      value: `$${totalEarnings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      value: formatPrice(totalEarnings),
       icon: TrendingUp,
       color: 'bg-blue-50 text-blue-600',
       href: '/seller/earnings',
@@ -148,7 +149,7 @@ export default async function SellerDashboard() {
                     <p className="text-xs text-[#9E8079]">Stock: {product.stock}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold text-[#2D1F1A]">${product.price.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-[#2D1F1A]">{formatPrice(product.price)}</p>
                     <span className={`text-[10px] font-semibold ${product.isApproved ? 'text-[#7D9B76]' : 'text-amber-500'}`}>
                       {product.isApproved ? 'Approved' : 'Pending'}
                     </span>
@@ -181,7 +182,7 @@ export default async function SellerDashboard() {
                     <p className="text-xs text-[#9E8079]">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold text-[#2D1F1A]">${order.totalPrice.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-[#2D1F1A]">{formatPrice(order.totalPrice)}</p>
                     <StatusBadge status={order.status} />
                   </div>
                 </div>

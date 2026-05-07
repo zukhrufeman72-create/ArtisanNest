@@ -7,7 +7,7 @@ import { createNotification } from '@/lib/notifications'
 const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as const
 type OrderStatus = (typeof VALID_STATUSES)[number]
 
-type Params = { params: Promise<{ id: string }> }
+type Params = { params: Promise<{ orderId: string }> }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   const session = await getSession()
@@ -15,9 +15,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id } = await params
-  const orderId = parseInt(id)
-  if (isNaN(orderId)) return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 })
+  const { orderId } = await params
+  const id = parseInt(orderId)
+  if (isNaN(id)) return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 })
 
   const { status } = await request.json()
   if (!VALID_STATUSES.includes(status as OrderStatus)) {
@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // Verify this seller has items in the order
   const order = await prisma.order.findUnique({
-    where: { id: orderId },
+    where: { id },
     include: {
       user: { select: { id: true, name: true, email: true } },
       items: {
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   const updated = await prisma.order.update({
-    where: { id: orderId },
+    where: { id },
     data: {
       status: status as OrderStatus,
       paymentStatus: status === 'PAID' ? 'PAID' : undefined,
@@ -52,11 +52,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // Send email + in-app notification to customer (fire-and-forget)
   const { name, email } = order.user
-  void sendOrderStatusUpdateEmail(email, name, orderId, status).catch(console.error)
+  void sendOrderStatusUpdateEmail(email, name, id, status).catch(console.error)
   void createNotification({
     userId: order.user.id,
     title: statusTitle(status),
-    body: `Your order #${orderId} has been updated to: ${status.charAt(0) + status.slice(1).toLowerCase()}`,
+    body: `Your order #${id} has been updated to: ${status.charAt(0) + status.slice(1).toLowerCase()}`,
     type: 'ORDER_STATUS',
     link: '/orders',
   }).catch(console.error)

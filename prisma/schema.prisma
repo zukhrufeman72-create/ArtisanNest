@@ -12,6 +12,7 @@ datasource db {
 ///////////////////////
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   SELLER
   CUSTOMER
@@ -25,30 +26,115 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum ShopStatus {
+  PENDING
+  ACTIVE
+  BLOCKED
+  INACTIVE
+}
+
+enum DeliveryStatus {
+  PENDING
+  CONFIRMED
+  PACKED
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum VariantStatus {
+  AVAILABLE
+  OUT_OF_STOCK
+  DISCONTINUED
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+enum CustomOrderStatus {
+  PENDING
+  REVIEWING
+  QUOTED
+  ACCEPTED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum DealStatus {
+  SCHEDULED
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum InventoryAction {
+  RESTOCK
+  SOLD
+  ADJUSTMENT
+  RETURN
+  DAMAGE
+  INITIAL
+}
+
 ///////////////////////
 // USERS
 ///////////////////////
 
 model User {
-  id         Int      @id @default(autoincrement())
-  name       String
-  email      String   @unique
-  password   String
-  role       Role     @default(CUSTOMER)
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  password     String
+  role         Role     @default(CUSTOMER)
+  isVerified   Boolean  @default(false)
+  isApproved   Boolean  @default(true)  // false for sellers pending admin approval
+  isSubAdmin   Boolean  @default(false)
+  permissions  String?  @db.Text        // JSON array of permission strings
+  avatar       String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
 
-  products             Product[]      @relation("SellerProducts")
+  products             Product[]            @relation("SellerProducts")
   cart                 Cart?
   orders               Order[]
   reviews              Review[]
   wishlist             Wishlist[]
   notifications        Notification[]
-  sentMessages         Message[]      @relation("SentMessages")
-  receivedMessages     Message[]      @relation("ReceivedMessages")
-  complaintsSubmitted  Complaint[]    @relation("ComplaintUser")
-  complaintsReceived   Complaint[]    @relation("ComplaintSeller")
-  coupons              Coupon[]       @relation("SellerCoupons")
+  sentMessages         Message[]            @relation("SentMessages")
+  receivedMessages     Message[]            @relation("ReceivedMessages")
+  complaintsSubmitted  Complaint[]          @relation("ComplaintUser")
+  complaintsReceived   Complaint[]          @relation("ComplaintSeller")
+  coupons              Coupon[]             @relation("SellerCoupons")
+  emailChangeTokens    EmailChangeToken[]
+  shopProfile          SellerShopProfile?   @relation("SellerShopProfile")
+  transactions         PaymentTransaction[] @relation("CustomerTransactions")
+  deliveryUpdates      DeliveryTracking[]   @relation("DeliveryTrackingUpdatedBy")
+  trackingHistoryUpdates DeliveryTrackingHistory[] @relation("TrackingHistoryUpdatedBy")
+  refundRequests       RefundRequest[]      @relation("RefundRequests")
+  refundsProcessed     RefundRequest[]      @relation("RefundProcessedBy")
+  customOrdersAsCustomer CustomOrder[]      @relation("CustomerCustomOrders")
+  customOrdersAsSeller   CustomOrder[]      @relation("SellerCustomOrders")
+  dealsCreated         Deal[]               @relation("DealCreator")
+  auditLogs            AuditLog[]           @relation("AuditLogs")
+  visitorLogs          VisitorLog[]         @relation("VisitorLogs")
+  inventoryHistory     InventoryHistory[]   @relation("InventoryUpdatedBy")
+  reviewResponses      ReviewResponse[]     @relation("SellerReviewResponses")
+  reviewHelpful        ReviewHelpful[]
 }
 
 ///////////////////////
@@ -56,9 +142,16 @@ model User {
 ///////////////////////
 
 model Category {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  image       String?
+  color       String?  // hex color for UI
+  icon        String?  // icon name
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
   products Product[]
 }
@@ -74,11 +167,14 @@ model Product {
   price            Float
   discountPrice    Float?
   stock            Int      @default(0)
-  image            String
+  image            String?
   isActive         Boolean  @default(true)
   isApproved       Boolean  @default(false)
   material         String?
   origin           String?
+  viewCount        Int      @default(0)
+  purchaseCount    Int      @default(0)
+  score            Float    @default(0)  // computed relevance score
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -88,11 +184,77 @@ model Product {
   seller   User     @relation("SellerProducts", fields: [sellerId], references: [id])
   category Category @relation(fields: [categoryId], references: [id])
 
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-  reviews    Review[]
-  wishlist   Wishlist[]
-  complaints Complaint[]
+  cartItems        CartItem[]
+  orderItems       OrderItem[]
+  reviews          Review[]
+  wishlist         Wishlist[]
+  complaints       Complaint[]
+  variants         ProductVariant[]
+  images           ProductImage[]
+  inventoryHistory InventoryHistory[]
+  dealProducts     DealProduct[]
+}
+
+///////////////////////
+// PRODUCT IMAGES (Gallery)
+///////////////////////
+
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  url       String
+  altText   String?
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+///////////////////////
+// PRODUCT VARIANTS
+///////////////////////
+
+model ProductVariant {
+  id            Int           @id @default(autoincrement())
+  productId     Int
+  color         String?
+  size          String?
+  material      String?
+  design        String?
+  sku           String?       @unique
+  price         Float
+  stockQuantity Int           @default(0)
+  imageUrl      String?
+  status        VariantStatus @default(AVAILABLE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  product          Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems        CartItem[]
+  orderItems       OrderItem[]
+  inventoryHistory InventoryHistory[]
+}
+
+///////////////////////
+// INVENTORY HISTORY
+///////////////////////
+
+model InventoryHistory {
+  id          Int             @id @default(autoincrement())
+  productId   Int
+  variantId   Int?
+  action      InventoryAction
+  quantity    Int
+  stockBefore Int
+  stockAfter  Int
+  reason      String?
+  createdBy   Int?
+  createdAt   DateTime        @default(now())
+
+  product   Product         @relation(fields: [productId], references: [id])
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  createdByUser User?       @relation("InventoryUpdatedBy", fields: [createdBy], references: [id])
 }
 
 ///////////////////////
@@ -112,13 +274,15 @@ model Cart {
 ///////////////////////
 
 model CartItem {
-  id        Int @id @default(autoincrement())
+  id        Int  @id @default(autoincrement())
   cartId    Int
   productId Int
-  quantity  Int @default(1)
+  variantId Int?
+  quantity  Int  @default(1)
 
-  cart    Cart    @relation(fields: [cartId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  cart    Cart            @relation(fields: [cartId], references: [id])
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 ///////////////////////
@@ -128,7 +292,7 @@ model CartItem {
 model Coupon {
   id             Int       @id @default(autoincrement())
   code           String    @unique
-  discountType   String    // PERCENTAGE or FIXED
+  discountType   String
   discountValue  Float
   minOrderAmount Float     @default(0)
   expiresAt      DateTime?
@@ -177,9 +341,12 @@ model Order {
 
   createdAt DateTime @default(now())
 
-  user   User        @relation(fields: [userId], references: [id])
-  items  OrderItem[]
-  coupon Coupon?     @relation("OrderCoupon", fields: [couponId], references: [id])
+  user             User                 @relation(fields: [userId], references: [id])
+  items            OrderItem[]
+  coupon           Coupon?              @relation("OrderCoupon", fields: [couponId], references: [id])
+  deliveryTracking DeliveryTracking?
+  transactions     PaymentTransaction[]
+  refundRequests   RefundRequest[]
 }
 
 ///////////////////////
@@ -187,31 +354,261 @@ model Order {
 ///////////////////////
 
 model OrderItem {
-  id        Int   @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   orderId   Int
   productId Int
+  variantId Int?
   quantity  Int
   price     Float
+  color     String?
+  size      String?
+  material  String?
+  design    String?
 
-  order   Order   @relation(fields: [orderId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  order   Order           @relation(fields: [orderId], references: [id])
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 ///////////////////////
-// REVIEWS
+// SELLER SHOP PROFILE
+///////////////////////
+
+model SellerShopProfile {
+  id               Int        @id @default(autoincrement())
+  sellerId         Int        @unique
+  shopName         String
+  shopLogo         String?
+  shopBanner       String?
+  description      String?    @db.Text
+  address          String?
+  contactNumber    String?
+  businessCategory String?
+  openingTime      String?
+  closingTime      String?
+  status           ShopStatus @default(PENDING)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  seller User @relation("SellerShopProfile", fields: [sellerId], references: [id])
+}
+
+///////////////////////
+// PAYMENT TRANSACTIONS
+///////////////////////
+
+model PaymentTransaction {
+  id                    Int                      @id @default(autoincrement())
+  orderId               Int
+  customerId            Int
+  sellerId              Int?
+  transactionId         String                   @unique
+  paymentMethod         String
+  paymentStatus         PaymentTransactionStatus @default(PENDING)
+  amount                Float
+  currency              String                   @default("PKR")
+  stripePaymentIntentId String?
+  createdAt             DateTime                 @default(now())
+
+  order    Order @relation(fields: [orderId], references: [id])
+  customer User  @relation("CustomerTransactions", fields: [customerId], references: [id])
+}
+
+///////////////////////
+// DELIVERY TRACKING
+///////////////////////
+
+model DeliveryTracking {
+  id                    Int            @id @default(autoincrement())
+  orderId               Int            @unique
+  status                DeliveryStatus @default(PENDING)
+  location              String?
+  remarks               String?        @db.Text
+  updatedById           Int?
+  estimatedDeliveryDate DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  order     Order                    @relation(fields: [orderId], references: [id])
+  updatedBy User?                    @relation("DeliveryTrackingUpdatedBy", fields: [updatedById], references: [id])
+  history   DeliveryTrackingHistory[]
+}
+
+model DeliveryTrackingHistory {
+  id                 Int            @id @default(autoincrement())
+  deliveryTrackingId Int
+  status             DeliveryStatus
+  location           String?
+  remarks            String?
+  updatedById        Int?
+  createdAt          DateTime       @default(now())
+
+  deliveryTracking DeliveryTracking @relation(fields: [deliveryTrackingId], references: [id])
+  updatedBy        User?            @relation("TrackingHistoryUpdatedBy", fields: [updatedById], references: [id])
+}
+
+///////////////////////
+// REFUND REQUESTS
+///////////////////////
+
+model RefundRequest {
+  id            Int          @id @default(autoincrement())
+  orderId       Int
+  userId        Int
+  reason        String       @db.Text
+  amount        Float
+  status        RefundStatus @default(PENDING)
+  adminNote     String?      @db.Text
+  processedById Int?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  order       Order @relation(fields: [orderId], references: [id])
+  user        User  @relation("RefundRequests", fields: [userId], references: [id])
+  processedBy User? @relation("RefundProcessedBy", fields: [processedById], references: [id])
+}
+
+///////////////////////
+// CUSTOM ORDERS
+///////////////////////
+
+model CustomOrder {
+  id          Int               @id @default(autoincrement())
+  customerId  Int
+  sellerId    Int?
+  title       String
+  description String            @db.Text
+  budget      Float?
+  deadline    DateTime?
+  attachments String?           @db.Text // JSON array of URLs
+  status      CustomOrderStatus @default(PENDING)
+  quotedPrice Float?
+  sellerNote  String?           @db.Text
+  adminNote   String?           @db.Text
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  customer User  @relation("CustomerCustomOrders", fields: [customerId], references: [id])
+  seller   User? @relation("SellerCustomOrders", fields: [sellerId], references: [id])
+}
+
+///////////////////////
+// DEALS / SALES
+///////////////////////
+
+model Deal {
+  id            Int        @id @default(autoincrement())
+  title         String
+  description   String?    @db.Text
+  discountType  String     // PERCENTAGE or FIXED
+  discountValue Float
+  startDate     DateTime
+  endDate       DateTime
+  status        DealStatus @default(SCHEDULED)
+  bannerImage   String?
+  isGlobal      Boolean    @default(false)
+  createdBy     Int
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  creator  User          @relation("DealCreator", fields: [createdBy], references: [id])
+  products DealProduct[]
+}
+
+model DealProduct {
+  id        Int @id @default(autoincrement())
+  dealId    Int
+  productId Int
+
+  deal    Deal    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, productId])
+}
+
+///////////////////////
+// AUDIT LOGS
+///////////////////////
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  userEmail  String?
+  userRole   String?
+  action     String   // e.g. APPROVE_PRODUCT, DELETE_USER, UPDATE_ORDER
+  entity     String   // e.g. Product, User, Order
+  entityId   String?
+  oldData    String?  @db.Text // JSON
+  newData    String?  @db.Text // JSON
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation("AuditLogs", fields: [userId], references: [id])
+}
+
+///////////////////////
+// VISITOR LOGS
+///////////////////////
+
+model VisitorLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  path      String
+  ipAddress String?
+  userAgent String?
+  referrer  String?
+  duration  Int?     // seconds on page
+  createdAt DateTime @default(now())
+
+  user User? @relation("VisitorLogs", fields: [userId], references: [id])
+}
+
+///////////////////////
+// REVIEWS (enhanced)
 ///////////////////////
 
 model Review {
-  id        Int      @id @default(autoincrement())
-  rating    Int
-  comment   String?
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  rating       Int
+  comment      String?  @db.Text
+  images       String?  @db.Text // JSON array of image URLs
+  helpfulCount Int      @default(0)
+  isVerified   Boolean  @default(false) // purchased the product
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   userId    Int
   productId Int
 
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  user     User              @relation(fields: [userId], references: [id])
+  product  Product           @relation(fields: [productId], references: [id])
+  response ReviewResponse?
+  helpful  ReviewHelpful[]
+
+  @@unique([userId, productId])
+}
+
+model ReviewResponse {
+  id        Int      @id @default(autoincrement())
+  reviewId  Int      @unique
+  sellerId  Int
+  response  String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  seller User   @relation("SellerReviewResponses", fields: [sellerId], references: [id])
+}
+
+model ReviewHelpful {
+  id       Int @id @default(autoincrement())
+  reviewId Int
+  userId   Int
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([reviewId, userId])
 }
 
 ///////////////////////
@@ -251,11 +648,13 @@ model Message {
 ///////////////////////
 
 model Complaint {
-  id        Int      @id @default(autoincrement())
-  subject   String
-  message   String   @db.Text
-  status    String   @default("PENDING")
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  subject     String
+  message     String   @db.Text
+  status      String   @default("PENDING")
+  adminReply  String?  @db.Text
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
 
   userId    Int
   productId Int?
@@ -267,17 +666,19 @@ model Complaint {
 }
 
 ///////////////////////
-// NOTIFICATIONS
+// NOTIFICATIONS (enhanced)
 ///////////////////////
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  title     String
-  body      String
-  type      String
-  isRead    Boolean  @default(false)
-  link      String?
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  title        String
+  body         String   @db.Text
+  type         String
+  isRead       Boolean  @default(false)
+  link         String?
+  imageUrl     String?
+  isActionable Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   userId Int?
   user   User? @relation(fields: [userId], references: [id])
@@ -293,4 +694,37 @@ model VerificationToken {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+///////////////////////
+// PASSWORD RESET (OTP)
+///////////////////////
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otp       String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+///////////////////////
+// EMAIL CHANGE (OTP)
+///////////////////////
+
+model EmailChangeToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  newEmail  String
+  otp       String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

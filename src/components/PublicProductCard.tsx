@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Heart, ShoppingCart, Star, Package, CheckCircle, Loader2, MessageCircle } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
 
@@ -11,7 +12,7 @@ export type PublicProduct = {
   price: number
   discountPrice: number | null
   stock: number
-  image: string
+  image: string | null
   category: { name: string }
   seller: { id: number; name: string }
   _count: { reviews: number }
@@ -101,11 +102,11 @@ export default function PublicProductCard({ product, isWishlisted = false, compa
         </div>
       )}
 
-      {/* Image */}
-      <div className="relative h-48 overflow-hidden bg-[#F5F2EF] shrink-0">
+      {/* Image — clickable */}
+      <Link href={`/product/${product.id}`} className="relative h-48 overflow-hidden bg-[#F5F2EF] shrink-0 block">
         {product.image ? (
           <img
-            src={product.image}
+            src={product.image ?? undefined}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
@@ -130,7 +131,7 @@ export default function PublicProductCard({ product, isWishlisted = false, compa
 
         {/* Wishlist button */}
         <button
-          onClick={handleWishlist}
+          onClick={(e) => { e.preventDefault(); handleWishlist() }}
           disabled={wishlistLoading}
           className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm ${
             wishlisted
@@ -144,14 +145,14 @@ export default function PublicProductCard({ product, isWishlisted = false, compa
             : <Heart size={13} fill={wishlisted ? 'currentColor' : 'none'} />
           }
         </button>
-      </div>
+      </Link>
 
       {/* Info */}
       <div className="p-4 flex flex-col flex-1">
         <div className="text-xs text-[#9E8079] font-medium mb-0.5">{product.category.name}</div>
-        <h3 className="font-semibold text-[#2D1F1A] text-sm leading-snug mb-1 group-hover:text-[#C8896A] transition-colors line-clamp-2 flex-1">
+        <Link href={`/product/${product.id}`} className="font-semibold text-[#2D1F1A] text-sm leading-snug mb-1 group-hover:text-[#C8896A] transition-colors line-clamp-2 flex-1 block hover:text-[#C8896A]">
           {product.name}
-        </h3>
+        </Link>
 
         {/* Seller */}
         <p className="text-[11px] text-[#C4AEA4] mb-2">by {product.seller.name}</p>

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { createCategory, deleteCategory } from '@/app/actions/admin'
 import { Tags, Plus, Trash2, Package, Grid3X3, TrendingUp } from 'lucide-react'
+import CategoryEditor from './CategoryEditor'
 
 const CARD_COLORS = [
   { bg: 'bg-linear-to-br from-orange-50 to-amber-100', icon: 'bg-orange-100 text-orange-600', badge: 'bg-orange-100 text-orange-700', border: 'border-orange-200/60', dot: 'bg-orange-400' },
@@ -15,7 +16,7 @@ const CARD_COLORS = [
 
 export default async function CategoriesPage() {
   const categories = await prisma.category.findMany({
-    orderBy: { name: 'asc' },
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     include: { _count: { select: { products: true } } },
   })
 
@@ -24,15 +25,14 @@ export default async function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-serif font-bold text-[#2D1F1A]">Categories</h1>
-          <p className="text-sm text-[#9E8079] mt-0.5">Manage your product categories</p>
+          <p className="text-sm text-[#9E8079] mt-0.5">Manage product categories with images and metadata</p>
         </div>
       </div>
 
-      {/* Stats row */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { icon: Grid3X3, label: 'Total Categories', value: categories.length, color: 'text-[#C8896A]', bg: 'bg-[#C8896A]/10' },
@@ -91,7 +91,7 @@ export default async function CategoriesPage() {
         <>
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-[#6B4C3B]">All Categories ({categories.length})</p>
-            <p className="text-xs text-[#9E8079]">Only empty categories can be deleted</p>
+            <p className="text-xs text-[#9E8079]">Click the edit icon to update image, color, icon, and description</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {categories.map((cat, i) => {
@@ -100,54 +100,77 @@ export default async function CategoriesPage() {
               return (
                 <div
                   key={cat.id}
-                  className={`group relative rounded-2xl border ${colors.border} ${colors.bg} p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5`}
-                  style={{ animationDelay: `${i * 50}ms` }}
+                  className={`group relative rounded-2xl border ${colors.border} overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5`}
+                  style={{ background: cat.color ? `${cat.color}15` : undefined }}
                 >
-                  {/* Product count badge */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-11 h-11 rounded-xl ${colors.icon} flex items-center justify-center`}>
-                      <Tags size={18} />
+                  {/* Category image */}
+                  {cat.image && (
+                    <div className="h-24 overflow-hidden">
+                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
                     </div>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${colors.badge}`}>
-                      {cat._count.products} {cat._count.products === 1 ? 'product' : 'products'}
-                    </span>
-                  </div>
+                  )}
 
-                  {/* Category name */}
-                  <h3 className="font-semibold text-[#2D1F1A] text-sm leading-snug mb-1">{cat.name}</h3>
-                  <p className="text-xs text-[#9E8079]">
-                    Added {new Date(cat.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                  </p>
-
-                  {/* Activity bar */}
-                  <div className="mt-4 h-1.5 bg-white/60 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${colors.dot} rounded-full transition-all duration-500`}
-                      style={{ width: totalProducts > 0 ? `${Math.min((cat._count.products / Math.max(totalProducts, 1)) * 100 * 3, 100)}%` : '0%' }}
-                    />
-                  </div>
-
-                  {/* Delete button — only for empty categories */}
-                  {isEmpty && (
-                    <form action={deleteCategory} className="mt-3">
-                      <input type="hidden" name="categoryId" value={cat.id} />
-                      <button
-                        type="submit"
-                        className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors font-medium border border-rose-100"
-                        title="Delete empty category"
+                  <div className={`p-5 ${cat.image ? '' : colors.bg}`}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-base ${cat.color ? '' : colors.icon}`}
+                        style={cat.color ? { background: `${cat.color}20`, color: cat.color } : undefined}
                       >
-                        <Trash2 size={12} /> Delete
-                      </button>
-                    </form>
-                  )}
-
-                  {/* Occupied indicator */}
-                  {!isEmpty && (
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-[#9E8079]">
-                      <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                      Active with {cat._count.products} listing{cat._count.products !== 1 ? 's' : ''}
+                        {cat.icon ?? <Tags size={16} />}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
+                          {cat._count.products} products
+                        </span>
+                        {!cat.isActive && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">Inactive</span>
+                        )}
+                      </div>
                     </div>
-                  )}
+
+                    <h3 className="font-semibold text-[#2D1F1A] text-sm mb-0.5">{cat.name}</h3>
+                    {cat.description && (
+                      <p className="text-xs text-[#9E8079] line-clamp-2 mb-2">{cat.description}</p>
+                    )}
+
+                    {/* Activity bar */}
+                    <div className="mt-2 h-1 bg-white/60 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500`}
+                        style={{
+                          width: totalProducts > 0 ? `${Math.min((cat._count.products / Math.max(totalProducts, 1)) * 100 * 3, 100)}%` : '0%',
+                          backgroundColor: cat.color ?? undefined,
+                        }}
+                      />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-3 flex gap-2">
+                      <CategoryEditor
+                        category={{
+                          id: cat.id,
+                          name: cat.name,
+                          description: cat.description,
+                          image: cat.image,
+                          color: cat.color,
+                          icon: cat.icon,
+                          sortOrder: cat.sortOrder,
+                          isActive: cat.isActive,
+                        }}
+                      />
+                      {isEmpty && (
+                        <form action={deleteCategory} className="flex-1">
+                          <input type="hidden" name="categoryId" value={cat.id} />
+                          <button
+                            type="submit"
+                            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors border border-rose-100"
+                          >
+                            <Trash2 size={11} /> Delete
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )
             })}

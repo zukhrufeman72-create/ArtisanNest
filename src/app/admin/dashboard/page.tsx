@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { Users, Package, ShoppingBag, TrendingUp, UserCheck, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { RevenueChart, OrdersChart } from '@/components/admin/OverviewChart'
+import { formatPrice } from '@/lib/currency'
 
 export default async function AdminDashboard() {
   const [userCount, sellerCount, customerCount, productCount, orderCount, revenueData, recentUsers, recentOrders] =
@@ -20,6 +21,7 @@ export default async function AdminDashboard() {
       prisma.order.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
+        where: { user: { id: { gt: 0 } } },
         select: {
           id: true, totalPrice: true, status: true, createdAt: true,
           user: { select: { name: true } },
@@ -56,7 +58,7 @@ export default async function AdminDashboard() {
     },
     {
       label: 'Total Revenue',
-      value: `$${revenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      value: formatPrice(revenue),
       icon: TrendingUp,
       color: 'bg-purple-50 text-purple-600',
       href: '/admin/reports',
@@ -178,7 +180,7 @@ export default async function AdminDashboard() {
                     <p className="text-xs text-[#9E8079]">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold text-[#2D1F1A]">${order.totalPrice.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-[#2D1F1A]">{formatPrice(order.totalPrice)}</p>
                     <StatusBadge status={order.status} />
                   </div>
                 </div>

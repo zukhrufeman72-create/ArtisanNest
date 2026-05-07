@@ -1,10 +1,13 @@
-import { verifySession } from '@/lib/dal'
+import { requireSeller } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 import { updateSellerProfile } from '@/app/actions/seller'
 import { User, Lock, Package, Star, ShoppingBag } from 'lucide-react'
+import OtpChangeForm from '@/components/ui/OtpChangeForm'
+
+export const metadata = { title: 'Profile — Seller · ArtisanNest' }
 
 export default async function SellerProfilePage() {
-  const session = await verifySession()
+  const session = await requireSeller()
 
   const [seller, productCount, reviewCount, orderCount] = await Promise.all([
     prisma.user.findUnique({
@@ -15,6 +18,11 @@ export default async function SellerProfilePage() {
     prisma.review.count({ where: { product: { sellerId: session.userId } } }),
     prisma.order.count({ where: { items: { some: { product: { sellerId: session.userId } } } } }),
   ])
+
+  async function handleUpdateName(formData: FormData) {
+    'use server'
+    await updateSellerProfile(formData)
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -52,13 +60,13 @@ export default async function SellerProfilePage() {
         </div>
       </div>
 
-      {/* Profile form */}
+      {/* Name form */}
       <div className="bg-white rounded-2xl border border-[#EAE3DC] overflow-hidden">
         <div className="px-5 py-4 border-b border-[#EAE3DC] flex items-center gap-2">
           <User size={16} className="text-[#7D9B76]" />
-          <h2 className="font-semibold text-[#2D1F1A]">Profile Information</h2>
+          <h2 className="font-semibold text-[#2D1F1A]">Display Name</h2>
         </div>
-        <form action={updateSellerProfile} className="p-5 space-y-4">
+        <form action={handleUpdateName} className="p-5 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#9E8079] uppercase tracking-wide mb-1.5">
               Full Name
@@ -67,68 +75,29 @@ export default async function SellerProfilePage() {
               name="name"
               defaultValue={seller?.name}
               required
+              placeholder="Must contain at least one letter (e.g. Ali123)"
               className="w-full px-4 py-2.5 text-sm bg-[#F5F2EF] border border-[#EAE3DC] rounded-xl text-[#2D1F1A] focus:outline-none focus:ring-2 focus:ring-[#7D9B76]/30 focus:border-[#7D9B76] transition-all"
             />
+            <p className="text-xs text-[#9E8079] mt-1">Name must contain at least one letter. Purely numeric names are not allowed.</p>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#9E8079] uppercase tracking-wide mb-1.5">
-              Email Address
-            </label>
-            <input
-              name="email"
-              type="email"
-              defaultValue={seller?.email}
-              required
-              className="w-full px-4 py-2.5 text-sm bg-[#F5F2EF] border border-[#EAE3DC] rounded-xl text-[#2D1F1A] focus:outline-none focus:ring-2 focus:ring-[#7D9B76]/30 focus:border-[#7D9B76] transition-all"
-            />
-          </div>
-          <div className="pt-1">
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-[#7D9B76] text-white text-sm font-semibold rounded-xl hover:bg-[#6a8663] transition-colors"
-            >
-              Save Changes
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-[#7D9B76] text-white text-sm font-semibold rounded-xl hover:bg-[#6a8663] transition-colors"
+          >
+            Save Name
+          </button>
         </form>
       </div>
 
-      {/* Change password */}
+      {/* OTP-based security section */}
       <div className="bg-white rounded-2xl border border-[#EAE3DC] overflow-hidden">
         <div className="px-5 py-4 border-b border-[#EAE3DC] flex items-center gap-2">
           <Lock size={16} className="text-[#7D9B76]" />
-          <h2 className="font-semibold text-[#2D1F1A]">Change Password</h2>
+          <h2 className="font-semibold text-[#2D1F1A]">Security</h2>
         </div>
-        <form action={updateSellerProfile} className="p-5 space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-[#9E8079] uppercase tracking-wide mb-1.5">
-              Current Password
-            </label>
-            <input
-              name="currentPassword"
-              type="password"
-              className="w-full px-4 py-2.5 text-sm bg-[#F5F2EF] border border-[#EAE3DC] rounded-xl text-[#2D1F1A] focus:outline-none focus:ring-2 focus:ring-[#7D9B76]/30 focus:border-[#7D9B76] transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#9E8079] uppercase tracking-wide mb-1.5">
-              New Password
-            </label>
-            <input
-              name="newPassword"
-              type="password"
-              className="w-full px-4 py-2.5 text-sm bg-[#F5F2EF] border border-[#EAE3DC] rounded-xl text-[#2D1F1A] focus:outline-none focus:ring-2 focus:ring-[#7D9B76]/30 focus:border-[#7D9B76] transition-all"
-            />
-          </div>
-          <div className="pt-1">
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-[#7D9B76] text-white text-sm font-semibold rounded-xl hover:bg-[#6a8663] transition-colors"
-            >
-              Update Password
-            </button>
-          </div>
-        </form>
+        <div className="p-5">
+          <OtpChangeForm currentEmail={seller?.email ?? ''} accentColor="green" />
+        </div>
       </div>
     </div>
   )

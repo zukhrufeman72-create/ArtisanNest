@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
@@ -7,12 +7,13 @@ import { deleteProduct } from '@/app/actions/seller'
 import {
   LayoutGrid, List, PlusCircle, Search, SlidersHorizontal,
   Package, Pencil, Trash2, CheckCircle, XCircle, Tag,
-  ChevronDown, X,
+  ChevronDown, X, Layers,
 } from 'lucide-react'
+import { formatPrice } from '@/lib/currency'
 
 type Product = {
   id: number; name: string; shortDescription: string; price: number
-  discountPrice: number | null; stock: number; image: string
+  discountPrice: number | null; stock: number; image: string | null
   isApproved: boolean; isActive: boolean; createdAt: Date | string
   category: { id: number; name: string }
 }
@@ -184,20 +185,20 @@ export default function ProductsView({
             <p className="text-xs font-semibold text-[#9E8079] uppercase tracking-wide mb-2">Price Range</p>
             <div className="flex items-center gap-2">
               <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9E8079] text-xs font-medium">$</span>
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9E8079] text-xs font-medium">Rs.</span>
                 <input
                   type="number" min="0" placeholder="Min" value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-24 pl-6 pr-2 py-1.5 text-xs bg-[#F5F2EF] border border-[#EAE3DC] rounded-lg text-[#2D1F1A] focus:outline-none focus:ring-1 focus:ring-[#7D9B76]/40 focus:border-[#7D9B76]"
+                  className="w-24 pl-8 pr-2 py-1.5 text-xs bg-[#F5F2EF] border border-[#EAE3DC] rounded-lg text-[#2D1F1A] focus:outline-none focus:ring-1 focus:ring-[#7D9B76]/40 focus:border-[#7D9B76]"
                 />
               </div>
               <span className="text-[#C4AEA4] text-xs">–</span>
               <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9E8079] text-xs font-medium">$</span>
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9E8079] text-xs font-medium">Rs.</span>
                 <input
                   type="number" min="0" placeholder="Max" value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-24 pl-6 pr-2 py-1.5 text-xs bg-[#F5F2EF] border border-[#EAE3DC] rounded-lg text-[#2D1F1A] focus:outline-none focus:ring-1 focus:ring-[#7D9B76]/40 focus:border-[#7D9B76]"
+                  className="w-24 pl-8 pr-2 py-1.5 text-xs bg-[#F5F2EF] border border-[#EAE3DC] rounded-lg text-[#2D1F1A] focus:outline-none focus:ring-1 focus:ring-[#7D9B76]/40 focus:border-[#7D9B76]"
                 />
               </div>
               <button
@@ -308,7 +309,7 @@ function ProductCard({ product }: { product: Product }) {
       {/* Image */}
       <div className="relative h-44 bg-[#F5F2EF] overflow-hidden">
         {product.image ? (
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <img src={product.image ?? undefined} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Package size={32} className="text-[#C4AEA4]" />
@@ -329,8 +330,12 @@ function ProductCard({ product }: { product: Product }) {
         {/* Quick actions overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
           <Link href={`/seller/products/${product.id}/edit`}
-            className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-lg hover:bg-[#F5F2EF] transition-colors">
+            className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-lg hover:bg-[#F5F2EF] transition-colors" title="Edit">
             <Pencil size={14} className="text-[#6B4C3B]" />
+          </Link>
+          <Link href={`/seller/products/${product.id}/variants`}
+            className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-lg hover:bg-[#F5F2EF] transition-colors" title="Manage Variants">
+            <Layers size={14} className="text-[#7D9B76]" />
           </Link>
           <DeleteButton productId={product.id} />
         </div>
@@ -346,9 +351,9 @@ function ProductCard({ product }: { product: Product }) {
         </p>
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-base font-bold text-[#2D1F1A]">${product.price.toFixed(2)}</span>
+            <span className="text-base font-bold text-[#2D1F1A]">{formatPrice(product.price)}</span>
             {product.discountPrice && (
-              <span className="ml-1.5 text-xs text-[#7D9B76] font-semibold">${product.discountPrice.toFixed(2)}</span>
+              <span className="ml-1.5 text-xs text-[#7D9B76] font-semibold">{formatPrice(product.discountPrice)}</span>
             )}
           </div>
           <span className={`text-xs font-semibold ${product.stock === 0 ? 'text-rose-500' : product.stock < 5 ? 'text-amber-500' : 'text-[#9E8079]'}`}>
@@ -369,7 +374,7 @@ function ProductRow({ product }: { product: Product }) {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#F5F2EF] shrink-0">
             {product.image ? (
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              <img src={product.image ?? undefined} alt={product.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <Package size={14} className="text-[#C4AEA4]" />
@@ -384,9 +389,9 @@ function ProductRow({ product }: { product: Product }) {
       </td>
       <td className="px-5 py-3.5 text-sm text-[#9E8079]">{product.category.name}</td>
       <td className="px-5 py-3.5">
-        <p className="font-semibold text-[#2D1F1A] text-sm">${product.price.toFixed(2)}</p>
+        <p className="font-semibold text-[#2D1F1A] text-sm">{formatPrice(product.price)}</p>
         {product.discountPrice && (
-          <p className="text-xs text-[#7D9B76]">${product.discountPrice.toFixed(2)}</p>
+          <p className="text-xs text-[#7D9B76]">{formatPrice(product.discountPrice)}</p>
         )}
       </td>
       <td className="px-5 py-3.5">
@@ -408,8 +413,12 @@ function ProductRow({ product }: { product: Product }) {
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-2">
           <Link href={`/seller/products/${product.id}/edit`}
-            className="p-1.5 text-[#9E8079] hover:text-[#7D9B76] hover:bg-[#7D9B76]/10 rounded-lg transition-colors">
+            className="p-1.5 text-[#9E8079] hover:text-[#7D9B76] hover:bg-[#7D9B76]/10 rounded-lg transition-colors" title="Edit">
             <Pencil size={14} />
+          </Link>
+          <Link href={`/seller/products/${product.id}/variants`}
+            className="p-1.5 text-[#9E8079] hover:text-[#C8896A] hover:bg-[#C8896A]/10 rounded-lg transition-colors" title="Variants">
+            <Layers size={14} />
           </Link>
           <DeleteButton productId={product.id} />
         </div>

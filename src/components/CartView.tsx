@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
@@ -13,7 +13,7 @@ type CartProduct = {
   name: string
   price: number
   discountPrice: number | null
-  image: string
+  image: string | null
   stock: number
   seller: { name: string }
   category: { name: string }
@@ -127,7 +127,7 @@ export default function CartView({ initialItems, initialTotal }: Props) {
               {/* Image */}
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-[#F5F2EF] shrink-0">
                 {item.product.image ? (
-                  <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                  <img src={item.product.image ?? undefined} alt={item.product.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Package size={20} className="text-[#C4AEA4]" />

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"d:\\\\Hand_Craft_Fyp\\\\craft-store\" -Force)",
+      "Bash(Select-Object Name, FullName)"
+    ]
+  }
+}
