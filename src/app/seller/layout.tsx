@@ -2,7 +2,6 @@ import { verifySession } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import SellerShell from '@/components/seller/SellerShell'
-import MessengerPanelWrapper from '@/components/MessengerPanelWrapper'
 
 export default async function SellerLayout({ children }: { children: React.ReactNode }) {
   const session = await verifySession()
@@ -14,11 +13,8 @@ export default async function SellerLayout({ children }: { children: React.React
   })
 
   return (
-    <>
-      <SellerShell sellerName={seller?.name ?? 'Seller'} sellerEmail={seller?.email ?? ''}>
-        {children}
-      </SellerShell>
-      <MessengerPanelWrapper currentUserId={session.userId} />
-    </>
+    <SellerShell sellerName={seller?.name ?? 'Seller'} sellerEmail={seller?.email ?? ''}>
+      {children}
+    </SellerShell>
   )
 }

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { logout } from "@/app/actions/auth"
 import {
   ShoppingBag, Heart, Search, Menu, X, ChevronDown,
-  User, Package, LogOut, LayoutDashboard, ShoppingCart, MessageCircle,
+  User, Package, LogOut, LayoutDashboard, ShoppingCart, MessageCircle, ClipboardList,
 } from "lucide-react"
 import AuthModal from "./AuthModal"
 import NotificationBell from "./NotificationBell"
@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/#products" },
   { label: "Categories", href: "/#categories" },
+  { label: "Custom Orders", href: "/custom-orders" },
   { label: "Contact", href: "/contact" },
   { label: "Support", href: "/support" },
 ]
@@ -230,6 +231,13 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
                               className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] hover:text-[#C8896A] transition-colors"
                             >
                               <Package size={15} /> My Orders
+                            </Link>
+                            <Link
+                              href="/custom-orders"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#6B4C3B] hover:bg-[#F5EFE6] hover:text-[#C8896A] transition-colors"
+                            >
+                              <ClipboardList size={15} /> Custom Orders
                             </Link>
                           </>
                         )}

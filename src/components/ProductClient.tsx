@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ShoppingBag, Heart, ChevronLeft, ChevronRight, Star, Shield, Truck, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { ShoppingBag, Heart, ChevronLeft, ChevronRight, Star, Shield, Truck, RefreshCw, ChevronDown, ChevronUp, Loader2, CheckCircle } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
 
 type Variant = {
@@ -37,7 +37,7 @@ export default function ProductClient({
   images, name, price, discountPrice, stock,
   shortDescription, material, origin, variants,
   activeDealLabel, activeDealDiscount,
-  avgRating, totalReviews,
+  avgRating, totalReviews, productId,
 }: Props) {
   const [activeImg, setActiveImg] = useState(0)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
@@ -45,6 +45,10 @@ export default function ProductClient({
   const [qty, setQty] = useState(1)
   const [wishlisted, setWishlisted] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(true)
+  const [cartLoading, setCartLoading] = useState(false)
+  const [cartAdded, setCartAdded] = useState(false)
+  const [wishlistLoading, setWishlistLoading] = useState(false)
+  const [loginPrompt, setLoginPrompt] = useState(false)
 
   const safeImages = images.length > 0 ? images : ['/placeholder-product.jpg']
 
@@ -64,11 +68,67 @@ export default function ProductClient({
 
   const canAddToCart = displayStock > 0
 
+  async function handleAddToCart() {
+    if (cartLoading || cartAdded || !canAddToCart) return
+    setCartLoading(true)
+    try {
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: qty, variantId: matchedVariant?.id }),
+      })
+      const data = await res.json()
+      if (res.status === 401) { setLoginPrompt(true); return }
+      if (data.success) {
+        setCartAdded(true)
+        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: data.cartCount } }))
+        setTimeout(() => setCartAdded(false), 2500)
+      }
+    } catch { /* silent */ }
+    finally { setCartLoading(false) }
+  }
+
+  async function handleWishlist() {
+    if (wishlistLoading) return
+    setWishlistLoading(true)
+    try {
+      const res = await fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId }),
+      })
+      if (res.status === 401) { setLoginPrompt(true); return }
+      const data = await res.json()
+      if ('added' in data) setWishlisted(data.added)
+    } catch { /* silent */ }
+    finally { setWishlistLoading(false) }
+  }
+
   function prev() { setActiveImg((i) => (i === 0 ? safeImages.length - 1 : i - 1)) }
   function next() { setActiveImg((i) => (i === safeImages.length - 1 ? 0 : i + 1)) }
 
   return (
-    <div className="grid lg:grid-cols-2 gap-8 xl:gap-12">
+    <div className="grid lg:grid-cols-2 gap-8 xl:gap-12 relative">
+      {/* Login prompt overlay */}
+      {loginPrompt && (
+        <div className="absolute inset-0 z-20 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 rounded-2xl">
+          <div className="w-12 h-12 rounded-full bg-[#C8896A]/10 flex items-center justify-center mb-3">
+            <ShoppingBag size={20} className="text-[#C8896A]" />
+          </div>
+          <p className="text-sm font-semibold text-[#2D1F1A] mb-1">Sign in required</p>
+          <p className="text-xs text-[#9E8079] text-center mb-4">Please sign in to add items to your cart or wishlist.</p>
+          <button
+            onClick={() => { setLoginPrompt(false); window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { tab: 'login' } })) }}
+            className="px-5 py-2 bg-[#C8896A] text-white text-xs font-semibold rounded-xl hover:bg-[#A8694A] transition-colors"
+          >
+            Sign In
+          </button>
+          <button onClick={() => setLoginPrompt(false)} className="mt-2 text-xs text-[#9E8079] hover:text-[#2D1F1A] transition-colors">
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* ── Left: gallery ── */}
       <div className="flex gap-3">
         {/* Vertical thumbnail strip */}
@@ -236,21 +296,35 @@ export default function ProductClient({
         {/* CTA buttons */}
         <div className="flex gap-3">
           <button
-            disabled={!canAddToCart}
-            className="flex-1 flex items-center justify-center gap-2 py-4 bg-[#2D1F1A] hover:bg-[#3D2F2A] text-white font-bold text-sm rounded-2xl transition-all hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={handleAddToCart}
+            disabled={!canAddToCart || cartLoading}
+            className={`flex-1 flex items-center justify-center gap-2 py-4 font-bold text-sm rounded-2xl transition-all hover:shadow-lg disabled:cursor-not-allowed ${
+              cartAdded
+                ? 'bg-[#7D9B76] text-white'
+                : 'bg-[#2D1F1A] hover:bg-[#3D2F2A] text-white disabled:opacity-40'
+            }`}
           >
-            <ShoppingBag size={17} />
-            Add to basket
+            {cartLoading ? (
+              <><Loader2 size={17} className="animate-spin" /> Adding…</>
+            ) : cartAdded ? (
+              <><CheckCircle size={17} /> Added to Basket!</>
+            ) : (
+              <><ShoppingBag size={17} /> Add to Basket</>
+            )}
           </button>
           <button
-            onClick={() => setWishlisted((w) => !w)}
+            onClick={handleWishlist}
+            disabled={wishlistLoading}
             className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all ${
               wishlisted
                 ? 'border-rose-400 bg-rose-50 text-rose-500'
                 : 'border-[#EAE3DC] text-[#9E8079] hover:border-rose-400 hover:text-rose-400 hover:bg-rose-50'
             }`}
           >
-            <Heart size={20} fill={wishlisted ? 'currentColor' : 'none'} />
+            {wishlistLoading
+              ? <Loader2 size={18} className="animate-spin" />
+              : <Heart size={20} fill={wishlisted ? 'currentColor' : 'none'} />
+            }
           </button>
         </div>
 

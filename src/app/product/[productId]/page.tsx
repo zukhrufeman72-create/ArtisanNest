@@ -6,6 +6,8 @@ import { Store, ArrowRight, Tag, Shield } from 'lucide-react'
 import ProductReviews from '@/components/ProductReviews'
 import ProductRecommendations from '@/components/ProductRecommendations'
 import ProductClient from '@/components/ProductClient'
+import NavbarWrapper from '@/components/NavbarWrapper'
+import Footer from '@/components/Footer'
 
 export const dynamic = 'force-dynamic'
 
@@ -98,6 +100,8 @@ export default async function ProductDetailPage({
     : null
 
   return (
+    <>
+    <NavbarWrapper />
     <div className="min-h-screen bg-[#FDFAF7]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-20">
 
@@ -210,5 +214,7 @@ export default async function ProductDetailPage({
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   )
 }

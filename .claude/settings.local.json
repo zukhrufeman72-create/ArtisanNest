@@ -9,7 +9,18 @@
       "PowerShell(cmd /c \"dir /b `\"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\orders`\"\")",
       "PowerShell(cmd /c \"rd /s /q `\"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\orders\\\\[id]`\"\")",
       "Bash(node -e ' *)",
-      "Bash(Get-ChildItem -Path \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\seller\\\\products\" -Recurse)"
+      "Bash(Get-ChildItem -Path \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\seller\\\\products\" -Recurse)",
+      "Bash(Get-ChildItem -Path \"d:\\\\Hand_Craft_Fyp\\\\craft-store\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\custom-orders\\\\[id]\\\\message\" 2>/dev/null; echo \"done\")",
+      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\seller\\\\custom-orders\\\\[id]\")",
+      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\seller\\\\custom-orders\\\\[id]\\\\progress\")",
+      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\seller\\\\custom-orders\\\\[id]\\\\message\")",
+      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\custom-orders\\\\[id]\")",
+      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\seller\\\\custom-orders\\\\[id]\")"
+    ],
+    "additionalDirectories": [
+      "d:\\Hand_Craft_Fyp\\craft-store\\src\\app\\api\\custom-orders\\[id]"
     ]
   }
 }

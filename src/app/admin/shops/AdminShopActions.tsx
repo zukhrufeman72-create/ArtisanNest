@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { CheckCircle, XCircle, Ban, ChevronDown } from 'lucide-react'
 
 type Props = { shopId: number; currentStatus: string }
@@ -8,6 +8,19 @@ type Props = { shopId: number; currentStatus: string }
 export default function AdminShopActions({ shopId, currentStatus }: Props) {
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
+  function handleOpen() {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPos({
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+      })
+    }
+    setOpen((o) => !o)
+  }
 
   async function updateStatus(status: string) {
     setLoading(true)
@@ -27,16 +40,17 @@ export default function AdminShopActions({ shopId, currentStatus }: Props) {
   }
 
   const options = [
-    { value: 'ACTIVE', label: 'Approve', icon: CheckCircle, color: 'text-green-600' },
-    { value: 'BLOCKED', label: 'Block', icon: Ban, color: 'text-rose-600' },
-    { value: 'INACTIVE', label: 'Deactivate', icon: XCircle, color: 'text-gray-500' },
-    { value: 'PENDING', label: 'Set Pending', icon: ChevronDown, color: 'text-amber-600' },
+    { value: 'ACTIVE',   label: 'Approve',      icon: CheckCircle, color: 'text-green-600' },
+    { value: 'BLOCKED',  label: 'Block',         icon: Ban,         color: 'text-rose-600'  },
+    { value: 'INACTIVE', label: 'Deactivate',    icon: XCircle,     color: 'text-gray-500'  },
+    { value: 'PENDING',  label: 'Set Pending',   icon: ChevronDown, color: 'text-amber-600' },
   ].filter((o) => o.value !== currentStatus)
 
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={buttonRef}
+        onClick={handleOpen}
         disabled={loading}
         className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-[#F5F2EF] text-[#2D1F1A] rounded-lg hover:bg-[#EAE3DC] transition-colors disabled:opacity-50"
       >
@@ -45,8 +59,11 @@ export default function AdminShopActions({ shopId, currentStatus }: Props) {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-1 z-20 bg-white rounded-xl border border-[#EAE3DC] shadow-lg overflow-hidden min-w-[130px]">
+          <div className="fixed inset-0 z-200" onClick={() => setOpen(false)} />
+          <div
+            className="fixed z-201 bg-white rounded-xl border border-[#EAE3DC] shadow-lg overflow-hidden min-w-33"
+            style={{ top: dropdownPos.top, right: dropdownPos.right }}
+          >
             {options.map((opt) => {
               const Icon = opt.icon
               return (

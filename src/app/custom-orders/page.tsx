@@ -1,231 +1,204 @@
-'use client'
+import Link from 'next/link'
+import { requireCustomer } from '@/lib/dal'
+import { prisma } from '@/lib/prisma'
+import { formatPrice } from '@/lib/currency'
+import {
+  ClipboardList, Plus, Calendar, Banknote, Clock, CheckCircle2,
+  XCircle, AlertCircle, Package, Truck, Star, ChevronRight, Sparkles,
+} from 'lucide-react'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Plus, X, Calendar, DollarSign, Clock, CheckCircle, Sparkles } from 'lucide-react'
-
-interface CustomOrder {
-  id: number
-  title: string
-  description: string
-  budget: number | null
-  deadline: string | null
-  status: string
-  quotedPrice: number | null
-  createdAt: string
-  seller: { id: number; name: string } | null
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  PENDING:             { label: 'Pending Review',      color: 'text-amber-700',    bg: 'bg-amber-50 border-amber-200',     icon: Clock },
+  REVIEWING:           { label: 'Under Review',        color: 'text-blue-700',     bg: 'bg-blue-50 border-blue-200',       icon: AlertCircle },
+  NEED_MORE_DETAILS:   { label: 'More Details Needed', color: 'text-orange-700',   bg: 'bg-orange-50 border-orange-200',   icon: AlertCircle },
+  QUOTED:              { label: 'Quotation Received',  color: 'text-purple-700',   bg: 'bg-purple-50 border-purple-200',   icon: Banknote },
+  ACCEPTED:            { label: 'Accepted',            color: 'text-emerald-700',  bg: 'bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
+  PAYMENT_PENDING:     { label: 'Payment Pending',     color: 'text-yellow-700',   bg: 'bg-yellow-50 border-yellow-200',   icon: Banknote },
+  ADVANCE_PAID:        { label: 'Advance Paid',        color: 'text-teal-700',     bg: 'bg-teal-50 border-teal-200',       icon: CheckCircle2 },
+  IN_PROGRESS:         { label: 'In Progress',         color: 'text-[#C8896A]',    bg: 'bg-[#FDF8F3] border-[#C8896A]/30',icon: Package },
+  FINAL_APPROVAL:      { label: 'Final Approval',      color: 'text-indigo-700',   bg: 'bg-indigo-50 border-indigo-200',   icon: Star },
+  READY_FOR_DELIVERY:  { label: 'Ready for Delivery',  color: 'text-cyan-700',     bg: 'bg-cyan-50 border-cyan-200',       icon: Package },
+  SHIPPED:             { label: 'Shipped',             color: 'text-violet-700',   bg: 'bg-violet-50 border-violet-200',   icon: Truck },
+  DELIVERED:           { label: 'Delivered',           color: 'text-emerald-700',  bg: 'bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
+  COMPLETED:           { label: 'Completed',           color: 'text-emerald-700',  bg: 'bg-emerald-50 border-emerald-200', icon: CheckCircle2 },
+  REJECTED:            { label: 'Rejected',            color: 'text-rose-700',     bg: 'bg-rose-50 border-rose-200',       icon: XCircle },
+  CANCELLED:           { label: 'Cancelled',           color: 'text-[#9E8079]',    bg: 'bg-[#F5EFE6] border-[#EAE3DC]',   icon: XCircle },
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-amber-500/10 text-amber-600',
-  ACCEPTED: 'bg-blue-500/10 text-blue-600',
-  IN_PROGRESS: 'bg-purple-500/10 text-purple-600',
-  COMPLETED: 'bg-emerald-500/10 text-emerald-600',
-  REJECTED: 'bg-rose-500/10 text-rose-600',
-  CANCELLED: 'bg-[#9E8079]/10 text-[#9E8079]',
+function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? { label: status, color: 'text-gray-600', bg: 'bg-gray-50 border-gray-200', icon: Clock }
+  const Icon = cfg.icon
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.color}`}>
+      <Icon size={11} />
+      {cfg.label}
+    </span>
+  )
 }
 
-const EMPTY_FORM = {
-  title: '', description: '', budget: '', deadline: '', attachments: '',
-}
+export default async function CustomOrdersPage() {
+  const session = await requireCustomer()
 
-export default function CustomOrdersPage() {
-  const [orders, setOrders] = useState<CustomOrder[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  const orders = await prisma.customOrder.findMany({
+    where: { customerId: session.userId },
+    include: {
+      seller: { select: { id: true, name: true } },
+      images: {
+        where: { imageType: 'reference' },
+        take: 1,
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    const res = await fetch('/api/custom-orders')
-    const data = await res.json()
-    setOrders(data.orders ?? [])
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { void load() }, [load])
-
-  async function submit() {
-    setError('')
-    if (!form.title || !form.description) {
-      setError('Title and description are required.')
-      return
-    }
-    setSubmitting(true)
-    const res = await fetch('/api/custom-orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: form.title,
-        description: form.description,
-        budget: form.budget ? Number(form.budget) : undefined,
-        deadline: form.deadline || undefined,
-        attachments: form.attachments ? form.attachments.split(',').map((u) => u.trim()).filter(Boolean) : undefined,
-      }),
-    })
-    const data = await res.json()
-    if (!res.ok) { setError(data.error ?? 'Failed to submit.'); setSubmitting(false); return }
-    setForm(EMPTY_FORM)
-    setShowForm(false)
-    setSubmitting(false)
-    void load()
+  const stats = {
+    total: orders.length,
+    pending: orders.filter((o) => o.status === 'PENDING').length,
+    inProgress: orders.filter((o) => o.status === 'IN_PROGRESS').length,
+    completed: orders.filter((o) => ['COMPLETED', 'DELIVERED'].includes(o.status)).length,
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F0EB] p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[#2D1F1A]">Custom Orders</h1>
-            <p className="text-sm text-[#9E8079]">Request a custom handcrafted item</p>
+    <div className="max-w-5xl mx-auto px-4 py-10">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-[#C8896A]/10 flex items-center justify-center">
+            <ClipboardList size={24} className="text-[#C8896A]" />
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#C8896A] text-white rounded-xl text-sm font-medium hover:bg-[#B8795A] transition-colors"
+          <div>
+            <h1 className="text-2xl font-bold text-[#2D1F1A]">My Custom Orders</h1>
+            <p className="text-sm text-[#9E8079]">Track your personalized craft requests</p>
+          </div>
+        </div>
+        <Link
+          href="/custom-orders/new"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C8896A] hover:bg-[#A8694A] text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+        >
+          <Plus size={16} />
+          Request Custom Order
+        </Link>
+      </div>
+
+      {/* Hero banner */}
+      <div className="relative overflow-hidden bg-linear-to-br from-[#C8896A] via-[#B8795A] to-[#8B5E45] rounded-2xl p-6 mb-8 text-white">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-2 right-10 w-32 h-32 rounded-full border-4 border-white" />
+          <div className="absolute -bottom-4 right-32 w-20 h-20 rounded-full border-4 border-white" />
+        </div>
+        <div className="relative flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg mb-1">Have a unique vision?</h3>
+            <p className="text-white/80 text-sm">Describe your dream handcrafted item and our skilled artisans will bring it to life — from custom embroidery to personalized pottery.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      {orders.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          {[
+            { label: 'Total Orders', value: stats.total, color: 'text-[#2D1F1A]', bg: 'bg-white' },
+            { label: 'Pending', value: stats.pending, color: 'text-amber-700', bg: 'bg-amber-50' },
+            { label: 'In Progress', value: stats.inProgress, color: 'text-[#C8896A]', bg: 'bg-[#FDF8F3]' },
+            { label: 'Completed', value: stats.completed, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+          ].map((stat) => (
+            <div key={stat.label} className={`${stat.bg} rounded-2xl border border-[#EAE3DC] p-4 text-center`}>
+              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+              <p className="text-xs text-[#9E8079] mt-0.5">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Orders list */}
+      {orders.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-[#EAE3DC] p-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#C8896A]/10 flex items-center justify-center mx-auto mb-4">
+            <ClipboardList size={32} className="text-[#C8896A]/60" />
+          </div>
+          <h3 className="text-lg font-semibold text-[#2D1F1A] mb-2">No custom orders yet</h3>
+          <p className="text-sm text-[#9E8079] mb-6 max-w-sm mx-auto">
+            Have something unique in mind? Submit a custom order request and our artisans will make it for you.
+          </p>
+          <Link
+            href="/custom-orders/new"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#C8896A] hover:bg-[#A8694A] text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:shadow-md"
           >
             <Plus size={16} />
-            New Request
-          </button>
+            Request Your First Custom Order
+          </Link>
         </div>
-
-        {/* Hero banner */}
-        <div className="bg-gradient-to-r from-[#C8896A] to-[#B8795A] rounded-2xl p-6 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <Sparkles size={20} />
-            <h3 className="font-bold text-lg">Request Something Unique</h3>
-          </div>
-          <p className="text-white/80 text-sm">
-            Have a specific design in mind? Describe your vision and our skilled artisans will bring it to life.
-          </p>
-        </div>
-
-        {/* Form */}
-        {showForm && (
-          <div className="bg-white rounded-2xl border border-[#EAE3DC] p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-[#2D1F1A]">Describe Your Custom Order</h3>
-              <button onClick={() => setShowForm(false)}><X size={18} className="text-[#9E8079]" /></button>
-            </div>
-            {error && <div className="mb-4 p-3 bg-rose-50 text-rose-600 text-sm rounded-xl">{error}</div>}
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-[#2D1F1A]">Title</label>
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="mt-1 w-full border border-[#EAE3DC] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C8896A]"
-                  placeholder="e.g. Custom embroidered wall art"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[#2D1F1A]">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={5}
-                  className="mt-1 w-full border border-[#EAE3DC] rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:border-[#C8896A]"
-                  placeholder="Describe the item you want — size, colors, materials, design details, etc."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-[#2D1F1A]">Budget (PKR, optional)</label>
-                  <input
-                    type="number"
-                    value={form.budget}
-                    onChange={(e) => setForm({ ...form, budget: e.target.value })}
-                    className="mt-1 w-full border border-[#EAE3DC] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C8896A]"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-[#2D1F1A]">Deadline (optional)</label>
-                  <input
-                    type="date"
-                    value={form.deadline}
-                    onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                    className="mt-1 w-full border border-[#EAE3DC] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C8896A]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[#2D1F1A]">Reference Image URLs (comma-separated)</label>
-                <input
-                  value={form.attachments}
-                  onChange={(e) => setForm({ ...form, attachments: e.target.value })}
-                  className="mt-1 w-full border border-[#EAE3DC] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C8896A]"
-                  placeholder="https://..., https://..."
-                />
-              </div>
-              <button
-                onClick={submit}
-                disabled={submitting}
-                className="w-full py-3 bg-[#C8896A] text-white rounded-xl font-medium hover:bg-[#B8795A] disabled:opacity-50 transition-colors"
+      ) : (
+        <div className="space-y-4">
+          {orders.map((order) => {
+            const img = order.images[0]?.url
+            return (
+              <Link
+                key={order.id}
+                href={`/custom-orders/${order.id}`}
+                className="block bg-white rounded-2xl border border-[#EAE3DC] hover:border-[#C8896A]/40 hover:shadow-md transition-all duration-200 group"
               >
-                {submitting ? 'Submitting...' : 'Submit Custom Order'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Orders list */}
-        {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="w-8 h-8 border-2 border-[#C8896A] border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : orders.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-[#EAE3DC] p-12 text-center text-[#9E8079]">
-            No custom orders yet.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {orders.map((o) => (
-              <div key={o.id} className="bg-white rounded-2xl border border-[#EAE3DC] p-5 hover:shadow-sm transition-shadow">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 className="font-semibold text-[#2D1F1A] text-sm">{o.title}</h4>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {o.status.replace('_', ' ')}
-                      </span>
-                    </div>
-                    <p className="text-sm text-[#9E8079] line-clamp-2">{o.description}</p>
-                    <div className="flex gap-4 mt-2 flex-wrap">
-                      {o.budget && (
-                        <div className="flex items-center gap-1 text-xs text-[#9E8079]">
-                          <DollarSign size={12} />
-                          Budget: PKR {o.budget.toLocaleString()}
-                        </div>
-                      )}
-                      {o.deadline && (
-                        <div className="flex items-center gap-1 text-xs text-[#9E8079]">
-                          <Calendar size={12} />
-                          By {new Date(o.deadline).toLocaleDateString()}
-                        </div>
-                      )}
-                      {o.seller && (
-                        <div className="flex items-center gap-1 text-xs text-[#9E8079]">
-                          Seller: {o.seller.name}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {o.quotedPrice && (
-                      <p className="font-bold text-[#C8896A]">
-                        Quote: PKR {o.quotedPrice.toLocaleString()}
-                      </p>
+                <div className="p-5 flex items-start gap-4">
+                  {/* Thumbnail */}
+                  <div className="w-16 h-16 rounded-xl bg-[#F5EFE6] overflow-hidden shrink-0 flex items-center justify-center">
+                    {img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={img} alt={order.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <ClipboardList size={24} className="text-[#C8896A]/40" />
                     )}
-                    <p className="text-xs text-[#9E8079]">{new Date(o.createdAt).toLocaleDateString()}</p>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="font-semibold text-[#2D1F1A] text-sm truncate group-hover:text-[#C8896A] transition-colors">
+                            {order.title}
+                          </h3>
+                          <StatusBadge status={order.status} />
+                        </div>
+                        <div className="flex items-center gap-4 flex-wrap text-xs text-[#9E8079]">
+                          <span className="flex items-center gap-1">
+                            <Calendar size={11} />
+                            {new Date(order.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                          {order.budget && (
+                            <span className="flex items-center gap-1">
+                              <Banknote size={11} />
+                              Budget: {formatPrice(order.budget)}
+                            </span>
+                          )}
+                          {order.deadline && (
+                            <span className="flex items-center gap-1">
+                              <Clock size={11} />
+                              Deadline: {new Date(order.deadline).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })}
+                            </span>
+                          )}
+                          {order.seller && (
+                            <span className="text-[#6B4C3B] font-medium">Seller: {order.seller.name}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="shrink-0 flex flex-col items-end gap-1">
+                        {order.estimatedPrice && (
+                          <span className="text-sm font-bold text-[#C8896A]">{formatPrice(order.estimatedPrice)}</span>
+                        )}
+                        <ChevronRight size={16} className="text-[#9E8079] group-hover:text-[#C8896A] transition-colors" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              </Link>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

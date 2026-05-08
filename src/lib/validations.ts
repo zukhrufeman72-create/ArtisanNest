@@ -75,14 +75,14 @@ export const CheckoutBodySchema = z.object({
   city: z.string().min(1, 'City is required.'),
   address: z.string().min(5, 'Address is too short.'),
   postalCode: z.string().min(1, 'Postal code is required.'),
-  addressLabel: z.string().optional(),
+  addressLabel: z.string().nullable().optional(),
   shippingMethod: z.enum(['STANDARD', 'EXPRESS']),
   paymentMethod: z.enum(['COD', 'STRIPE']),
-  stripePaymentIntentId: z.string().optional(),
-  couponId: z.union([z.number(), z.string()]).optional(),
-  couponCode: z.string().optional(),
-  discountAmount: z.union([z.number(), z.string()]).optional(),
-  orderNotes: z.string().max(500).optional(),
+  stripePaymentIntentId: z.string().nullable().optional(),
+  couponId: z.union([z.number(), z.string()]).nullable().optional(),
+  couponCode: z.string().nullable().optional(),
+  discountAmount: z.union([z.number(), z.string()]).nullable().optional(),
+  orderNotes: z.string().max(500).nullable().optional(),
 })
 
 // ── Stock alert threshold ─────────────────────────────────────────────────────

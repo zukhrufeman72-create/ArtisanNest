@@ -22,6 +22,7 @@ export default async function Home() {
       select: {
         id: true, name: true, shortDescription: true,
         price: true, discountPrice: true, stock: true, image: true,
+        images: { where: { isPrimary: true }, take: 1, select: { url: true } },
         category: { select: { name: true } },
         seller: { select: { id: true, name: true } },
         _count: { select: { reviews: true } },
@@ -38,15 +39,20 @@ export default async function Home() {
       : Promise.resolve([] as number[]),
   ])
 
+  const products = dbProducts.map(({ images, ...p }) => ({
+    ...p,
+    image: images[0]?.url ?? p.image,
+  }))
+
   return (
     <>
       <NavbarWrapper />
       <main>
         <Hero />
         <DealsBanner />
-        <FeaturedProducts products={dbProducts} wishlistIds={wishlistIds} />
+        <FeaturedProducts products={products} wishlistIds={wishlistIds} />
         <Categories categories={dbCategories} />
-        <TrendingSection products={dbProducts.slice(0, 4)} wishlistIds={wishlistIds} />
+        <TrendingSection products={products.slice(0, 4)} wishlistIds={wishlistIds} />
         <WhyChooseUs />
         <Testimonials />
         <Newsletter />

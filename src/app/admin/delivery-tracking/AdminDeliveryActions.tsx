@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { ChevronDown, Loader2 } from 'lucide-react'
 
 const STATUSES = [
@@ -16,6 +16,19 @@ export default function AdminDeliveryActions({ orderId, currentStatus }: Props) 
   const [remarks, setRemarks] = useState('')
   const [showRemarks, setShowRemarks] = useState(false)
   const [pendingStatus, setPendingStatus] = useState('')
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
+  function handleOpen() {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPos({
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+      })
+    }
+    setOpen((o) => !o)
+  }
 
   function selectStatus(status: string) {
     setPendingStatus(status)
@@ -44,7 +57,8 @@ export default function AdminDeliveryActions({ orderId, currentStatus }: Props) 
     <>
       <div className="relative">
         <button
-          onClick={() => setOpen((o) => !o)}
+          ref={buttonRef}
+          onClick={handleOpen}
           disabled={loading}
           className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-[#F5F2EF] text-[#2D1F1A] rounded-lg hover:bg-[#EAE3DC] transition-colors disabled:opacity-50"
         >
@@ -54,8 +68,11 @@ export default function AdminDeliveryActions({ orderId, currentStatus }: Props) 
 
         {open && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 mt-1 z-20 bg-white rounded-xl border border-[#EAE3DC] shadow-lg overflow-hidden min-w-[160px]">
+            <div className="fixed inset-0 z-200" onClick={() => setOpen(false)} />
+            <div
+              className="fixed z-201 bg-white rounded-xl border border-[#EAE3DC] shadow-lg overflow-hidden min-w-40"
+              style={{ top: dropdownPos.top, right: dropdownPos.right }}
+            >
               {STATUSES.filter((s) => s !== currentStatus).map((s) => (
                 <button
                   key={s}

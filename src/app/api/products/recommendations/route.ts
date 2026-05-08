@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
       name: true,
       price: true,
       image: true,
+      images: { where: { isPrimary: true }, take: 1, select: { url: true } },
       score: true,
       purchaseCount: true,
       viewCount: true,
@@ -38,8 +39,9 @@ export async function GET(req: NextRequest) {
     },
   })
 
-  const enriched = products.map((p) => ({
+  const enriched = products.map(({ images, ...p }) => ({
     ...p,
+    image: images[0]?.url ?? p.image,
     avgRating: p.reviews.length
       ? p.reviews.reduce((s, r) => s + r.rating, 0) / p.reviews.length
       : 0,

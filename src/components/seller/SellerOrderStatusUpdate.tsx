@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Loader2, ChevronDown, CheckCheck } from 'lucide-react'
 
 const STATUS_OPTIONS = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'] as const
@@ -33,6 +33,19 @@ export default function SellerOrderStatusUpdate({ orderId, currentStatus }: Prop
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
+  function handleOpen() {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPos({
+        top: rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+      })
+    }
+    setOpen((v) => !v)
+  }
 
   async function updateStatus(newStatus: OrderStatus) {
     if (newStatus === status) { setOpen(false); return }
@@ -63,7 +76,8 @@ export default function SellerOrderStatusUpdate({ orderId, currentStatus }: Prop
   return (
     <div className="relative inline-block">
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={buttonRef}
+        onClick={handleOpen}
         disabled={saving}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all
           ${STATUS_COLORS[status]} hover:opacity-80 disabled:opacity-60`}
@@ -80,8 +94,11 @@ export default function SellerOrderStatusUpdate({ orderId, currentStatus }: Prop
 
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-1.5 w-44 bg-white rounded-xl shadow-xl border border-[#EAE3DC] z-20 overflow-hidden">
+          <div className="fixed inset-0 z-200" onClick={() => setOpen(false)} />
+          <div
+            className="fixed w-44 bg-white rounded-xl shadow-xl border border-[#EAE3DC] z-201 overflow-hidden"
+            style={{ top: dropdownPos.top, right: dropdownPos.right }}
+          >
             {STATUS_OPTIONS.map((s) => (
               <button
                 key={s}
