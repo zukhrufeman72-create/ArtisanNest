@@ -220,6 +220,8 @@ export default async function SellerCustomOrderDetailPage({ params }: Params) {
             <SellerOrderActions
               orderId={order.id}
               status={order.status}
+              paymentStatus={order.paymentStatus}
+              finalPaymentMethod={order.finalPaymentMethod ?? null}
               estimatedPrice={order.estimatedPrice}
               advancePayment={order.advancePayment}
               finalPrice={order.finalPrice}

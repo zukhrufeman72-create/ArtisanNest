@@ -327,7 +327,14 @@ export default async function CustomOrderDetailPage({ params }: Params) {
               )}
               {order.status === 'QUOTED' && (
                 <div className="mt-4 pt-4 border-t border-[#F5EFE6]">
-                  <CustomerOrderActions orderId={order.id} status={order.status} />
+                  <CustomerOrderActions
+                    orderId={order.id}
+                    status={order.status}
+                    paymentStatus={order.paymentStatus}
+                    estimatedPrice={order.estimatedPrice}
+                    advancePayment={order.advancePayment}
+                    finalPaymentMethod={order.finalPaymentMethod ?? null}
+                  />
                 </div>
               )}
             </div>
@@ -416,12 +423,25 @@ export default async function CustomOrderDetailPage({ params }: Params) {
         {/* Right sidebar */}
         <div className="space-y-6">
           {/* Action buttons */}
-          {!['CANCELLED', 'REJECTED', 'COMPLETED', 'DELIVERED'].includes(order.status) && order.status !== 'QUOTED' && (
-            <div className="bg-white rounded-2xl border border-[#EAE3DC] p-5">
-              <h3 className="text-sm font-semibold text-[#2D1F1A] mb-3">Actions</h3>
-              <CustomerOrderActions orderId={order.id} status={order.status} />
-            </div>
-          )}
+          {(() => {
+            const showSidebarActions =
+              order.status === 'PAYMENT_PENDING' ||
+              (order.status === 'DELIVERED' && order.paymentStatus === 'ADVANCE_PAID') ||
+              (!['CANCELLED', 'REJECTED', 'COMPLETED', 'DELIVERED', 'QUOTED', 'IN_PROGRESS', 'ACCEPTED', 'ADVANCE_PAID', 'SHIPPED', 'PAYMENT_PENDING'].includes(order.status))
+            return showSidebarActions ? (
+              <div className="bg-white rounded-2xl border border-[#EAE3DC] p-5">
+                <h3 className="text-sm font-semibold text-[#2D1F1A] mb-3">Actions</h3>
+                <CustomerOrderActions
+                  orderId={order.id}
+                  status={order.status}
+                  paymentStatus={order.paymentStatus}
+                  estimatedPrice={order.estimatedPrice}
+                  advancePayment={order.advancePayment}
+                  finalPaymentMethod={order.finalPaymentMethod ?? null}
+                />
+              </div>
+            ) : null
+          })()}
 
           {/* Seller info */}
           {order.seller && (

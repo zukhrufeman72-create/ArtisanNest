@@ -10,6 +10,8 @@ import {
 type Props = {
   orderId: number
   status: string
+  paymentStatus: string
+  finalPaymentMethod: string | null
   estimatedPrice: number | null
   advancePayment: number | null
   finalPrice: number | null
@@ -23,7 +25,7 @@ const inputClass = 'mt-1.5 w-full border border-[#EAE3DC] rounded-xl px-3.5 py-2
 const labelClass = 'block text-xs font-medium text-[#6B4C3B]'
 
 export default function SellerOrderActions({
-  orderId, status, estimatedPrice, advancePayment, finalPrice,
+  orderId, status, paymentStatus, finalPaymentMethod, estimatedPrice, advancePayment, finalPrice,
   deliveryDays, quotationNotes, trackingNumber, courierName,
 }: Props) {
   const router = useRouter()
@@ -88,10 +90,26 @@ export default function SellerOrderActions({
     )
   }
 
+  // DELIVERED with advance paid + COD remaining — seller needs to confirm COD collected
+  if (status === 'DELIVERED' && paymentStatus === 'ADVANCE_PAID' && finalPaymentMethod === 'COD') {
+    return (
+      <div className="space-y-3">
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <p className="text-sm font-semibold text-amber-800">Collect Remaining COD Payment</p>
+          <p className="text-xs text-amber-700 mt-1">
+            Collect the remaining {estimatedPrice && advancePayment ? `Rs. ${(estimatedPrice - advancePayment).toLocaleString()}` : 'balance'} from the customer in cash.
+          </p>
+        </div>
+        {btn('Mark COD Payment Collected', <PackageCheck size={14} />, () => doAction('collect_cod'), 'success', loading === 'collect_cod')}
+      </div>
+    )
+  }
+
   if (['COMPLETED', 'DELIVERED', 'CANCELLED', 'REJECTED'].includes(status)) {
     return (
       <div className="p-4 bg-[#F5EFE6] rounded-xl text-sm text-[#9E8079] text-center">
-        This order is <span className="font-semibold text-[#2D1F1A]">{status}</span>. No further actions available.
+        This order is <span className="font-semibold text-[#2D1F1A]">{status}</span>.
+        {status === 'DELIVERED' ? ' Waiting for customer to complete online payment.' : ' No further actions available.'}
       </div>
     )
   }
@@ -250,16 +268,22 @@ export default function SellerOrderActions({
         </div>
       )}
 
-      {/* ACCEPTED / PAYMENT_PENDING — start work */}
-      {['ACCEPTED', 'PAYMENT_PENDING'].includes(status) && (
+      {/* ACCEPTED / ADVANCE_PAID / PAYMENT_PENDING — start work */}
+      {['ACCEPTED', 'ADVANCE_PAID', 'PAYMENT_PENDING'].includes(status) && (
         <div className="space-y-2">
-          <p className="text-xs text-[#9E8079]">Customer has accepted the quotation. Once payment is confirmed, start work.</p>
+          <p className="text-xs text-[#9E8079]">
+            {status === 'ADVANCE_PAID'
+              ? 'Advance payment received. You can now start working on this order.'
+              : status === 'ACCEPTED'
+                ? 'Customer has paid in full. You can now start working on this order.'
+                : 'Customer has accepted the quotation. Start work once payment is confirmed.'}
+          </p>
           {btn('Start Work', <Play size={14} />, () => doAction('start_work'), 'primary', loading === 'start_work')}
         </div>
       )}
 
-      {/* ADVANCE_PAID / IN_PROGRESS — ship */}
-      {['ADVANCE_PAID', 'IN_PROGRESS'].includes(status) && (
+      {/* IN_PROGRESS — ship */}
+      {['IN_PROGRESS'].includes(status) && (
         <div className="space-y-3">
           <p className="text-xs text-[#9E8079]">Order is in progress. Add progress updates below, then ship when ready.</p>
           <div className="flex flex-wrap gap-2">

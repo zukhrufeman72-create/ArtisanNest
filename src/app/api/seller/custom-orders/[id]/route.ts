@@ -149,9 +149,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     case 'start_work': {
+      // paymentStatus stays as-is (could be ADVANCE_PAID, PAID, or UNPAID for COD)
       updated = await prisma.customOrder.update({
         where: { id: orderId },
-        data: { status: 'IN_PROGRESS', paymentStatus: 'ADVANCE_PAID' },
+        data: { status: 'IN_PROGRESS' },
       })
       await createNotification({
         title: 'Work Started on Your Order',
@@ -183,13 +184,35 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     case 'deliver': {
+      // If fully paid (online or COD with no advance), mark COMPLETED+PAID
+      // If advance was paid, customer still needs to pay remaining → mark DELIVERED+ADVANCE_PAID
+      const nextPaymentStatus = order.paymentStatus === 'ADVANCE_PAID' ? 'ADVANCE_PAID' : 'PAID'
+      const nextStatus = order.paymentStatus === 'ADVANCE_PAID' ? 'DELIVERED' : 'COMPLETED'
       updated = await prisma.customOrder.update({
         where: { id: orderId },
-        data: { status: 'DELIVERED', paymentStatus: 'PAID' },
+        data: { status: nextStatus, paymentStatus: nextPaymentStatus },
       })
       await createNotification({
         title: 'Order Delivered',
         body: `Your custom order "${order.title}" has been marked as delivered.`,
+        type: 'custom_order',
+        link: `/custom-orders/${orderId}`,
+        userId: order.customerId,
+      })
+      break
+    }
+
+    case 'collect_cod': {
+      if (order.status !== 'DELIVERED' || order.paymentStatus !== 'ADVANCE_PAID') {
+        return NextResponse.json({ error: 'Order is not in the correct state.' }, { status: 400 })
+      }
+      updated = await prisma.customOrder.update({
+        where: { id: orderId },
+        data: { status: 'COMPLETED', paymentStatus: 'PAID' },
+      })
+      await createNotification({
+        title: 'Order Completed',
+        body: `Your custom order "${order.title}" is complete. Thank you!`,
         type: 'custom_order',
         link: `/custom-orders/${orderId}`,
         userId: order.customerId,

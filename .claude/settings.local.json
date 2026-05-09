@@ -17,7 +17,8 @@
       "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\seller\\\\custom-orders\\\\[id]\\\\progress\")",
       "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\seller\\\\custom-orders\\\\[id]\\\\message\")",
       "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\custom-orders\\\\[id]\")",
-      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\seller\\\\custom-orders\\\\[id]\")"
+      "Bash(mkdir \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\seller\\\\custom-orders\\\\[id]\")",
+      "Bash(New-Item -ItemType Directory -Path \"d:\\\\Hand_Craft_Fyp\\\\craft-store\\\\src\\\\app\\\\api\\\\custom-orders\\\\[id]\\\\pay\" -Force)"
     ],
     "additionalDirectories": [
       "d:\\Hand_Craft_Fyp\\craft-store\\src\\app\\api\\custom-orders\\[id]"

@@ -513,6 +513,7 @@ model CustomOrder {
   deliveryDays        Int?
   trackingNumber      String?
   courierName         String?
+  finalPaymentMethod  String?           // 'ONLINE' | 'COD' — how remaining/final payment is collected
   attachments         String?           @db.Text
   quotedPrice         Float?
   sellerNote          String?           @db.Text
