@@ -162,7 +162,7 @@ export default async function CustomOrdersPage() {
       </div>
 
       {/* Hero banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#C8896A] via-[#B8795A] to-[#8B5E45] rounded-2xl p-6 mb-8 text-white">
+      <div className="relative overflow-hidden bg-linear-to-br from-[#C8896A] via-[#B8795A] to-[#8B5E45] rounded-2xl p-6 mb-8 text-white">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-2 right-10 w-32 h-32 rounded-full border-4 border-white" />
           <div className="absolute -bottom-4 right-32 w-20 h-20 rounded-full border-4 border-white" />
