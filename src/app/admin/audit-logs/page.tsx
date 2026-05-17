@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Fragment } from 'react'
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 
 interface AuditLog {
@@ -116,9 +116,8 @@ export default function AdminAuditLogsPage() {
                 </thead>
                 <tbody>
                   {logs.map((log) => (
-                    <>
+                    <Fragment key={log.id}>
                       <tr
-                        key={log.id}
                         className="border-b border-[#EAE3DC]/50 hover:bg-[#F5F0EB]/30 transition-colors cursor-pointer"
                         onClick={() => setExpanded(expanded === log.id ? null : log.id)}
                       >
@@ -176,7 +175,7 @@ export default function AdminAuditLogsPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
