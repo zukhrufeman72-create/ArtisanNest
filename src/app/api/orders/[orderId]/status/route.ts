@@ -51,15 +51,22 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   })
 
   // Send email + in-app notification to customer (fire-and-forget)
-  const { name, email } = order.user
-  void sendOrderStatusUpdateEmail(email, name, id, status).catch(console.error)
-  void createNotification({
-    userId: order.user.id,
-    title: statusTitle(status),
-    body: `Your order #${id} has been updated to: ${status.charAt(0) + status.slice(1).toLowerCase()}`,
-    type: 'ORDER_STATUS',
-    link: '/orders',
-  }).catch(console.error)
+  const name = order.user?.name ?? order.customerName ?? 'Customer'
+  const email = order.user?.email ?? order.customerEmail
+
+  if (email) {
+    void sendOrderStatusUpdateEmail(email, name, id, status as OrderStatus).catch(console.error)
+  }
+
+  if (order.userId) {
+    void createNotification({
+      userId: order.userId,
+      title: statusTitle(status),
+      body: `Your order #${id} has been updated to: ${status.charAt(0) + status.slice(1).toLowerCase()}`,
+      type: 'ORDER_STATUS',
+      link: '/orders',
+    }).catch(console.error)
+  }
 
   return NextResponse.json({ success: true, status: updated.status })
 }

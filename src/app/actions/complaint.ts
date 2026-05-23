@@ -48,7 +48,7 @@ export async function submitComplaint(prevState: ComplaintState, formData: FormD
 
 export async function resolveComplaint(prevState: ComplaintState, formData: FormData): Promise<ComplaintState> {
   const session = await verifySession()
-  if (session.role !== 'ADMIN') return { error: 'Unauthorized' }
+  if (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN') return { error: 'Unauthorized' }
 
   const complaintId = Number(formData.get('complaintId'))
   const status = String(formData.get('status') ?? 'RESOLVED')
@@ -64,7 +64,7 @@ export async function resolveComplaint(prevState: ComplaintState, formData: Form
 
 export async function deleteUser(prevState: unknown, formData: FormData) {
   const session = await verifySession()
-  if (session.role !== 'ADMIN') return { error: 'Unauthorized' }
+  if (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN') return { error: 'Unauthorized' }
 
   const userId = Number(formData.get('userId'))
   if (!userId) return { error: 'Invalid user' }

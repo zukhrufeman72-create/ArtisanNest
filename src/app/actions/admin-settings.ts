@@ -11,7 +11,7 @@ import { nameSchema } from '@/lib/validations'
  */
 export async function updateAdminProfile(formData: FormData) {
   const session = await verifySession()
-  if (session.role !== 'ADMIN') return { error: 'Unauthorized.' }
+  if (session.role !== 'ADMIN' && session.role !== 'SUPER_ADMIN') return { error: 'Unauthorized.' }
 
   const rawName = String(formData.get('name') ?? '').trim()
   if (!rawName) return { error: 'Name is required.' }

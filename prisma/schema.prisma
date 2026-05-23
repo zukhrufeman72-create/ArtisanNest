@@ -323,7 +323,7 @@ model Coupon {
 
 model Order {
   id         Int         @id @default(autoincrement())
-  userId     Int
+  userId     Int?
   totalPrice Float
   subtotal   Float       @default(0)
   shippingFee Float      @default(0)
@@ -350,7 +350,7 @@ model Order {
 
   createdAt DateTime @default(now())
 
-  user             User                 @relation(fields: [userId], references: [id])
+  user             User?                @relation(fields: [userId], references: [id])
   items            OrderItem[]
   coupon           Coupon?              @relation("OrderCoupon", fields: [couponId], references: [id])
   deliveryTracking DeliveryTracking?

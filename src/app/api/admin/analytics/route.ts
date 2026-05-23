@@ -86,7 +86,11 @@ export async function GET(req: NextRequest) {
       productCount: c._count.id,
       totalPurchases: c._sum.purchaseCount ?? 0,
     })),
-    revenueByDay,
+    revenueByDay: revenueByDay.map((d) => ({
+      date: d.date,
+      revenue: Number(d.revenue),
+      orders: Number(d.orders),
+    })),
     ordersByStatus: ordersByStatus.reduce((acc, s) => {
       acc[s.status] = s._count.id
       return acc

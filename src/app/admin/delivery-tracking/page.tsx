@@ -123,8 +123,8 @@ export default async function AdminDeliveryTrackingPage({
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-[#2D1F1A]">{r.order.user.name}</p>
-                      <p className="text-xs text-[#9E8079]">{r.order.user.email}</p>
+                      <p className="font-medium text-[#2D1F1A]">{r.order.user?.name ?? 'Unknown'}</p>
+                      <p className="text-xs text-[#9E8079]">{r.order.user?.email ?? 'No email'}</p>
                     </td>
                     <td className="px-4 py-3 font-bold text-[#2D1F1A] whitespace-nowrap">
                       {formatPrice(r.order.totalPrice)}

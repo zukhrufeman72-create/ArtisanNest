@@ -26,7 +26,7 @@ type Order = {
   couponCode: string | null; orderNotes: string | null
   stripePaymentId: string | null
   createdAt: string
-  user: { name: string; email: string }
+  user: { name: string; email: string } | null
   items: OrderItem[]
 }
 
@@ -132,11 +132,11 @@ function OrderCard({ order }: { order: Order }) {
         {/* Customer mini-profile */}
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#C8896A] to-[#A8694A] flex items-center justify-center shrink-0 text-white text-xs font-bold">
-            {initials(order.user.name)}
+            {initials(order.user?.name ?? 'Unknown')}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#2D1F1A] truncate">{order.user.name}</p>
-            <p className="text-xs text-[#9E8079] truncate">{order.user.email}</p>
+            <p className="text-sm font-semibold text-[#2D1F1A] truncate">{order.user?.name ?? 'Unknown'}</p>
+            <p className="text-xs text-[#9E8079] truncate">{order.user?.email ?? 'No email'}</p>
           </div>
         </div>
 
@@ -170,12 +170,12 @@ function OrderCard({ order }: { order: Order }) {
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8896A] to-[#A8694A] flex items-center justify-center text-white text-sm font-bold shrink-0">
-                  {initials(order.user.name)}
+                  {initials(order.user?.name ?? 'Unknown')}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#2D1F1A]">{order.customerName ?? order.user.name}</p>
+                  <p className="text-sm font-semibold text-[#2D1F1A]">{order.customerName ?? order.user?.name ?? 'Unknown'}</p>
                   <p className="text-xs text-[#9E8079] flex items-center gap-1 mt-0.5">
-                    <Mail size={10} /> {order.customerEmail ?? order.user.email}
+                    <Mail size={10} /> {order.customerEmail ?? order.user?.email ?? 'No email'}
                   </p>
                   {order.customerPhone && (
                     <p className="text-xs text-[#9E8079] flex items-center gap-1 mt-0.5">
@@ -366,8 +366,8 @@ export default function AdminOrdersView({ orders, totalRevenue }: Props) {
       const matchStatus = statusFilter === 'ALL' || o.status === statusFilter
       const q = search.toLowerCase().trim()
       const matchSearch = !q
-        || o.user.name.toLowerCase().includes(q)
-        || o.user.email.toLowerCase().includes(q)
+        || (o.user?.name ?? '').toLowerCase().includes(q)
+        || (o.user?.email ?? '').toLowerCase().includes(q)
         || String(o.id).includes(q)
         || (o.customerPhone ?? '').includes(q)
         || (o.customerEmail ?? '').toLowerCase().includes(q)

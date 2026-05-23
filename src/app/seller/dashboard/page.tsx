@@ -178,7 +178,7 @@ export default async function SellerDashboard() {
                     <ShoppingBag size={14} className="text-[#7D9B76]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#2D1F1A] truncate">{order.user.name}</p>
+                    <p className="text-sm font-medium text-[#2D1F1A] truncate">{order.user?.name ?? 'Unknown'}</p>
                     <p className="text-xs text-[#9E8079]">{new Date(order.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div className="text-right shrink-0">

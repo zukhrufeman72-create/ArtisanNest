@@ -68,8 +68,8 @@ export default async function InvoicePage({ params }: Props) {
           <div className="grid grid-cols-2 gap-8">
             <div>
               <h4 className="text-xs font-semibold text-[#9E8079] uppercase tracking-wider mb-2">Bill To</h4>
-              <p className="font-semibold text-[#2D1F1A]">{order.user.name}</p>
-              <p className="text-sm text-[#9E8079]">{order.user.email}</p>
+              <p className="font-semibold text-[#2D1F1A]">{order.customerName ?? order.user?.name ?? 'Unknown'}</p>
+              <p className="text-sm text-[#9E8079]">{order.customerEmail ?? order.user?.email ?? 'No email'}</p>
               {order.customerPhone && <p className="text-sm text-[#9E8079]">{order.customerPhone}</p>}
             </div>
             <div>
