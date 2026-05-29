@@ -6,6 +6,7 @@ import {
   CheckCircle, ArrowLeft,
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default async function AdminEditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -117,8 +118,8 @@ export default async function AdminEditProductPage({ params }: { params: Promise
             {/* Product image preview */}
             <Section title="Product Image" icon={<Package size={15} className="text-[#C8896A]" />}>
               {product.image ? (
-                <div className="rounded-xl overflow-hidden border border-[#EAE3DC]">
-                  <img src={product.image} alt={product.name} className="w-full h-44 object-cover" />
+                <div className="relative h-44 rounded-xl overflow-hidden border border-[#EAE3DC]">
+                  <Image src={product.image} alt={product.name} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover" />
                 </div>
               ) : (
                 <div className="h-44 bg-[#F5F2EF] rounded-xl flex items-center justify-center">

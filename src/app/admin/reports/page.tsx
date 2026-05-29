@@ -4,6 +4,7 @@ import {
   ArrowUpRight, BarChart2, Activity,
 } from 'lucide-react'
 import { RevenueChart, OrdersChart } from '@/components/admin/OverviewChart'
+import Image from 'next/image'
 
 export default async function ReportsPage() {
   // eslint-disable-next-line react-hooks/purity
@@ -241,9 +242,8 @@ export default async function ReportsPage() {
               : topProducts.map((p, i) => (
                 <li key={p.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-[#F5F0EB]/30 transition-colors">
                   <span className="text-sm font-bold text-[#EAE3DC] w-5 shrink-0 text-right">#{i + 1}</span>
-                  <div className="w-9 h-9 rounded-xl overflow-hidden bg-[#F5F0EB] shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {p.image && <img src={p.image} alt={p.name} className="w-full h-full object-cover" />}
+                  <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-[#F5F0EB] shrink-0">
+                    {p.image && <Image src={p.image} alt={p.name} fill sizes="36px" className="object-cover" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-[#2D1F1A] truncate text-sm">{p.name}</p>

@@ -44,11 +44,12 @@ export default function AdminAuditLogsPage() {
   const [expanded, setExpanded] = useState<number | null>(null)
 
   const load = useCallback(() => {
-    setLoading(true)
     const params = new URLSearchParams({ page: String(page) })
     if (action) params.set('action', action)
     if (entity) params.set('entity', entity)
-    fetch(`/api/admin/audit-logs?${params}`)
+    Promise.resolve()
+      .then(() => setLoading(true))
+      .then(() => fetch(`/api/admin/audit-logs?${params}`))
       .then((r) => r.json())
       .then((data: { logs?: AuditLog[]; total?: number; pages?: number }) => {
         setLogs(data.logs ?? [])

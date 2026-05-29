@@ -2,6 +2,7 @@
 import { approveProduct, rejectProduct } from '@/app/actions/admin'
 import { Package, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
+import Image from 'next/image'
 
 export default async function ApprovalsPage() {
   const pending = await prisma.product.findMany({
@@ -60,10 +61,12 @@ export default async function ApprovalsPage() {
                 {/* Product image */}
                 <div className="sm:w-48 h-40 sm:h-auto bg-[#F5F2EF] shrink-0 relative overflow-hidden">
                   {product.image ? (
-                    <img
-                      src={product.image ?? undefined}
+                    <Image
+                      src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 100vw, 192px"
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

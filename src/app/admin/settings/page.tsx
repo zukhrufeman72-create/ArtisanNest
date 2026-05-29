@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 import { updateAdminProfile } from '@/app/actions/admin-settings'
-import { User, Lock, Shield, Mail } from 'lucide-react'
+import { User, Lock, Shield } from 'lucide-react'
 import OtpChangeForm from '@/components/ui/OtpChangeForm'
 
 export const metadata = { title: 'Settings — Admin · ArtisanNest' }

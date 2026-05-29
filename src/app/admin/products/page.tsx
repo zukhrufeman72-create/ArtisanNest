@@ -4,6 +4,7 @@ import { Package, CheckCircle, XCircle, Search, Pencil } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
 import Link from 'next/link'
 import AdminDeleteProduct from '@/components/admin/AdminDeleteProduct'
+import Image from 'next/image'
 
 export default async function AllProductsPage({
   searchParams,
@@ -176,12 +177,14 @@ export default async function AllProductsPage({
                     {/* Product */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#F5F2EF] shrink-0 border border-[#EAE3DC]">
+                        <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-[#F5F2EF] shrink-0 border border-[#EAE3DC]">
                           {product.image ? (
-                            <img
-                              src={product.image ?? undefined}
+                            <Image
+                              src={product.image}
                               alt={product.name}
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="44px"
+                              className="object-cover"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">

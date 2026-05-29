@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Pencil, X, Save } from 'lucide-react'
 
 interface CategoryData {
@@ -99,7 +100,9 @@ export default function CategoryEditor({ category }: { category: CategoryData })
                   placeholder="https://..."
                 />
                 {form.image && (
-                  <img src={form.image} alt="preview" className="mt-2 h-20 rounded-xl object-cover w-full" />
+                  <div className="relative mt-2 h-20 rounded-xl overflow-hidden">
+                    <Image src={form.image} alt="preview" fill sizes="(max-width: 640px) 100vw, 512px" className="object-cover" />
+                  </div>
                 )}
               </div>
 

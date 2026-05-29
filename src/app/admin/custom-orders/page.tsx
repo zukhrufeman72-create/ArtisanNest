@@ -37,10 +37,11 @@ export default function AdminCustomOrdersPage() {
   const [expanded, setExpanded] = useState<number | null>(null)
 
   const load = useCallback(() => {
-    setLoading(true)
     const params = new URLSearchParams({ page: String(page) })
     if (status) params.set('status', status)
-    fetch(`/api/custom-orders?${params}`)
+    Promise.resolve()
+      .then(() => setLoading(true))
+      .then(() => fetch(`/api/custom-orders?${params}`))
       .then((r) => r.json())
       .then((data: { orders?: CustomOrder[]; total?: number; pages?: number }) => {
         setOrders(data.orders ?? [])

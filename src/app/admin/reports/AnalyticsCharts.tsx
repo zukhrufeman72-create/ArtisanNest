@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer, BarChart, Bar,
 } from 'recharts'
 
 interface DayData { date: string; revenue: number; orders: number }

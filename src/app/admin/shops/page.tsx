@@ -2,6 +2,7 @@ import { requireAdmin } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 import { Store, Package, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
 import AdminShopActions from './AdminShopActions'
+import Image from 'next/image'
 
 export const dynamic = 'force-dynamic'
 
@@ -131,10 +132,9 @@ export default async function AdminShopsPage({
                   <tr key={shop.id} className="hover:bg-[#FDF8F4] transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#F5F2EF] flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="relative w-9 h-9 rounded-xl bg-[#F5F2EF] flex items-center justify-center overflow-hidden shrink-0">
                           {shop.shopLogo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={shop.shopLogo} alt="" className="w-full h-full object-cover" />
+                            <Image src={shop.shopLogo} alt="" fill sizes="36px" className="object-cover" />
                           ) : (
                             <Store size={16} className="text-[#C8896A]" />
                           )}
@@ -142,7 +142,7 @@ export default async function AdminShopsPage({
                         <div>
                           <p className="font-medium text-[#2D1F1A]">{shop.shopName}</p>
                           {shop.address && (
-                            <p className="text-xs text-[#9E8079] max-w-[120px] truncate">{shop.address}</p>
+                            <p className="text-xs text-[#9E8079] max-w-30 truncate">{shop.address}</p>
                           )}
                         </div>
                       </div>

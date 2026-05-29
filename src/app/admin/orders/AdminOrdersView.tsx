@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Image from 'next/image'
 import {
   ShoppingBag, Search, User, Mail, Phone, MapPin, Truck,
   CreditCard, Banknote, Tag, FileText, TrendingUp, Clock,
@@ -131,7 +132,7 @@ function OrderCard({ order }: { order: Order }) {
 
         {/* Customer mini-profile */}
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#C8896A] to-[#A8694A] flex items-center justify-center shrink-0 text-white text-xs font-bold">
+          <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#C8896A] to-[#A8694A] flex items-center justify-center shrink-0 text-white text-xs font-bold">
             {initials(order.user?.name ?? 'Unknown')}
           </div>
           <div className="min-w-0">
@@ -169,7 +170,7 @@ function OrderCard({ order }: { order: Order }) {
                 <User size={11} /> Customer
               </p>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8896A] to-[#A8694A] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#C8896A] to-[#A8694A] flex items-center justify-center text-white text-sm font-bold shrink-0">
                   {initials(order.user?.name ?? 'Unknown')}
                 </div>
                 <div>
@@ -276,9 +277,9 @@ function OrderCard({ order }: { order: Order }) {
                     <tr key={item.id} className="hover:bg-[#FDF9F5] transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden bg-[#F5F2EF] shrink-0">
+                          <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-[#F5F2EF] shrink-0">
                             {item.product.image
-                              ? <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                              ? <Image src={item.product.image} alt={item.product.name} fill sizes="36px" className="object-cover" />
                               : <div className="w-full h-full flex items-center justify-center"><Package size={14} className="text-[#C4AEA4]" /></div>
                             }
                           </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Plus, Calendar, Percent, DollarSign, Trash2, X, RefreshCw } from 'lucide-react'
 
 interface Deal {
@@ -39,8 +40,9 @@ export default function AdminDealsPage() {
   const [deleting, setDeleting] = useState<number | null>(null)
 
   const load = useCallback(() => {
-    setLoading(true)
-    fetch('/api/deals')
+    Promise.resolve()
+      .then(() => setLoading(true))
+      .then(() => fetch('/api/deals'))
       .then((r) => r.json())
       .then((data: { deals?: Deal[] }) => {
         setDeals(data.deals ?? [])
@@ -217,8 +219,7 @@ export default function AdminDealsPage() {
               <div key={deal.id} className="bg-white rounded-2xl border border-[#EAE3DC] overflow-hidden hover:shadow-md transition-shadow">
                 {deal.bannerImage && (
                   <div className="h-32 bg-[#F5F0EB] relative overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={deal.bannerImage} alt={deal.title} className="w-full h-full object-cover" />
+                    <Image src={deal.bannerImage} alt={deal.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover" />
                   </div>
                 )}
                 <div className="p-4">

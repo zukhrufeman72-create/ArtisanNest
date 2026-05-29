@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Fragment, useState, useEffect, useCallback } from 'react'
 import {
   RefreshCw, CheckCircle, XCircle, Clock, DollarSign,
   ChevronLeft, ChevronRight, FileText,
@@ -37,10 +37,11 @@ export default function AdminRefundsPage() {
   const [processing, setProcessing] = useState<number | null>(null)
 
   const load = useCallback(() => {
-    setLoading(true)
     const params = new URLSearchParams({ page: String(page) })
     if (status) params.set('status', status)
-    fetch(`/api/admin/refunds?${params}`)
+    Promise.resolve()
+      .then(() => setLoading(true))
+      .then(() => fetch(`/api/admin/refunds?${params}`))
       .then((r) => r.json())
       .then((data: { refunds?: RefundRequest[]; total?: number; pages?: number }) => {
         setRefunds(data.refunds ?? [])
@@ -151,8 +152,8 @@ export default function AdminRefundsPage() {
                 </thead>
                 <tbody>
                   {refunds.map((r) => (
-                    <>
-                      <tr key={r.id} className="border-b border-[#EAE3DC]/50 hover:bg-[#F5F0EB]/30 transition-colors">
+                    <Fragment key={r.id}>
+                      <tr className="border-b border-[#EAE3DC]/50 hover:bg-[#F5F0EB]/30 transition-colors">
                         <td className="px-4 py-3">
                           <div className="font-medium text-sm text-[#2D1F1A]">{r.user.name}</div>
                           <div className="text-xs text-[#9E8079]">{r.user.email}</div>
@@ -227,7 +228,7 @@ export default function AdminRefundsPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

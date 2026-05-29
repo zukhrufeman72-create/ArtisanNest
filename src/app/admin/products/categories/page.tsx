@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { createCategory, deleteCategory } from '@/app/actions/admin'
 import { Tags, Plus, Trash2, Package, Grid3X3, TrendingUp } from 'lucide-react'
 import CategoryEditor from './CategoryEditor'
+import Image from 'next/image'
 
 const CARD_COLORS = [
   { bg: 'bg-linear-to-br from-orange-50 to-amber-100', icon: 'bg-orange-100 text-orange-600', badge: 'bg-orange-100 text-orange-700', border: 'border-orange-200/60', dot: 'bg-orange-400' },
@@ -105,8 +106,8 @@ export default async function CategoriesPage() {
                 >
                   {/* Category image */}
                   {cat.image && (
-                    <div className="h-24 overflow-hidden">
-                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                    <div className="relative h-24 overflow-hidden">
+                      <Image src={cat.image} alt={cat.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw" className="object-cover" />
                     </div>
                   )}
 

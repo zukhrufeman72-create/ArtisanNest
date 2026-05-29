@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { Users, Package, ShoppingBag, TrendingUp, UserCheck, ArrowUpRight } from 'lucide-react'
+import { Users, ShoppingBag, TrendingUp, UserCheck, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { RevenueChart, OrdersChart } from '@/components/admin/OverviewChart'
 import { formatPrice } from '@/lib/currency'

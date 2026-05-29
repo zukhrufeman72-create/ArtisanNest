@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Eye, TrendingUp, Users, Map, RefreshCw } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -35,8 +36,9 @@ export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(true)
-    fetch(`/api/admin/analytics?days=${days}`)
+    Promise.resolve()
+      .then(() => setLoading(true))
+      .then(() => fetch(`/api/admin/analytics?days=${days}`))
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false) })
       .catch(() => setLoading(false))
@@ -176,8 +178,8 @@ export default function AdminAnalyticsPage() {
                       <li key={p.id} className="px-5 py-3 flex items-center gap-3 hover:bg-[#F5F0EB]/30 transition-colors">
                         <span className="text-sm font-bold text-[#EAE3DC] w-5 text-right shrink-0">#{i + 1}</span>
                         {p.image && (
-                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-[#F5F0EB] shrink-0">
-                            <img src={p.image ?? undefined} alt={p.name} className="w-full h-full object-cover" />
+                          <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-[#F5F0EB] shrink-0">
+                            <Image src={p.image} alt={p.name} fill sizes="32px" className="object-cover" />
                           </div>
                         )}
                         <p className="flex-1 text-sm text-[#2D1F1A] truncate">{p.name}</p>

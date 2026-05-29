@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { Users, UserCheck, UserX, Search } from 'lucide-react'
+import { Users, UserCheck, Search } from 'lucide-react'
 
 export default async function AllUsersPage({
   searchParams,
@@ -60,7 +60,7 @@ export default async function AllUsersPage({
       <div className="bg-white rounded-2xl border border-[#EAE3DC] overflow-hidden">
         {/* Filters */}
         <div className="px-5 py-4 border-b border-[#EAE3DC] flex flex-wrap gap-3 items-center">
-          <form className="flex-1 min-w-[180px] max-w-xs">
+          <form className="flex-1 min-w-45 max-w-xs">
             <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E8079]" />
               <input
