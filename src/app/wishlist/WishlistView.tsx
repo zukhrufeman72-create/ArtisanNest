@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useState } from 'react'
-import { Heart, ShoppingCart, MessageCircle, Package, Trash2, Star } from 'lucide-react'
+import { Heart, ShoppingCart, MessageCircle, Package, Star } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
 import Link from 'next/link'
 
