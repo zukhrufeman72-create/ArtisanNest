@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { formatPrice } from '@/lib/currency'
 import {
   ClipboardList, Plus, Calendar, Banknote, Clock, CheckCircle2,
-  XCircle, AlertCircle, Package, Truck, Star, ChevronRight, Sparkles, LogIn,
+  XCircle, AlertCircle, Package, Truck, Star, Sparkles, LogIn, Navigation,
 } from 'lucide-react'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
@@ -228,10 +228,9 @@ export default async function CustomOrdersPage() {
             } catch { /* ignore */ }
 
             return (
-              <Link
+              <div
                 key={order.id}
-                href={`/custom-orders/${order.id}`}
-                className="block bg-white rounded-2xl border border-[#EAE3DC] hover:border-[#C8896A]/40 hover:shadow-md transition-all duration-200 group"
+                className="bg-white rounded-2xl border border-[#EAE3DC] hover:border-[#C8896A]/40 hover:shadow-md transition-all duration-200 group"
               >
                 <div className="p-5 flex items-start gap-4">
                   {/* Thumbnail */}
@@ -249,11 +248,18 @@ export default async function CustomOrdersPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <h3 className="font-semibold text-[#2D1F1A] text-sm truncate group-hover:text-[#C8896A] transition-colors">
+                          <Link
+                            href={`/custom-orders/${order.id}`}
+                            className="font-semibold text-[#2D1F1A] text-sm truncate group-hover:text-[#C8896A] transition-colors"
+                          >
                             {order.title}
-                          </h3>
+                          </Link>
                           <StatusBadge status={order.status} />
                         </div>
+                        <p className="mb-2 text-xs font-medium text-[#9E8079]">
+                          Custom Order ID:{' '}
+                          <span className="font-mono font-bold text-[#2D1F1A]">#{order.id}</span>
+                        </p>
                         <div className="flex items-center gap-4 flex-wrap text-xs text-[#9E8079]">
                           <span className="flex items-center gap-1">
                             <Calendar size={11} />
@@ -280,12 +286,19 @@ export default async function CustomOrdersPage() {
                         {order.estimatedPrice && (
                           <span className="text-sm font-bold text-[#C8896A]">{formatPrice(order.estimatedPrice)}</span>
                         )}
-                        <ChevronRight size={16} className="text-[#9E8079] group-hover:text-[#C8896A] transition-colors" />
+                        <Link
+                          href={`/custom-orders/${order.id}`}
+                          className="mt-2 inline-flex h-9 items-center gap-1.5 bg-[#C8896A] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#A8694A]"
+                          aria-label={`Track custom order ${order.id}`}
+                        >
+                          <Navigation size={13} />
+                          Track Order
+                        </Link>
                       </div>
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

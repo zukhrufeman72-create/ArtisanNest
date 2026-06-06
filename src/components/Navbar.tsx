@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import AuthModal from "./AuthModal"
 import NotificationBell from "./NotificationBell"
+import BrandLogo from "./BrandLogo"
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -90,19 +91,12 @@ export default function Navbar({ user, initialCartCount }: NavbarProps) {
           <div className="flex items-center justify-between h-16 lg:h-20">
 
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-[#C8896A] flex items-center justify-center shadow-sm group-hover:bg-[#A8694A] transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3C8.5 3 6 6.5 6 10.5C6 14.5 9 18 12 20C15 18 18 14.5 18 10.5C18 6.5 15.5 3 12 3Z" fill="white" opacity="0.95" />
-                  <path d="M12 20V23" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M9.5 22H14.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="12" cy="10" r="2.5" fill="#C8896A" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-serif font-bold text-lg text-[#2D1F1A] leading-tight group-hover:text-[#C8896A] transition-colors">ArtisanNest</div>
-                <div className="text-[10px] text-[#9E8079] tracking-[0.15em] uppercase leading-none">Handmade Crafts</div>
-              </div>
+            <Link href="/" className="shrink-0" aria-label="ArtisanNest home">
+              <BrandLogo
+                priority
+                className="w-36 sm:w-44 lg:w-48"
+                imageClassName="max-h-11"
+              />
             </Link>
 
             {/* Desktop nav links */}

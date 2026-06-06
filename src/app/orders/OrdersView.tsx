@@ -1,11 +1,12 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { FormEvent, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ShoppingBag, Package, ChevronDown, ChevronUp,
   MapPin, CreditCard, Truck, Tag, FileText,
-  CheckCircle2, Clock, Zap, XCircle, Banknote, Navigation,
+  CheckCircle2, Clock, Zap, XCircle, Banknote, Navigation, Search,
 } from 'lucide-react'
 import { formatPrice } from '@/lib/currency'
 
@@ -107,7 +108,9 @@ function OrderCard({ order }: { order: Order }) {
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono font-bold text-[#2D1F1A] text-sm">#{order.id}</span>
+              <span className="text-xs font-medium text-[#9E8079]">
+                Order ID: <strong className="font-mono text-sm text-[#2D1F1A]">#{order.id}</strong>
+              </span>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.color}`}>
                 <Icon size={11} /> {cfg.label}
               </span>
@@ -351,7 +354,10 @@ function OrderCard({ order }: { order: Order }) {
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function OrdersView({ orders }: { orders: Order[] }) {
+  const router = useRouter()
   const [filter, setFilter] = useState<string>('ALL')
+  const [orderId, setOrderId] = useState('')
+  const [searchError, setSearchError] = useState('')
 
   const filtered = filter === 'ALL' ? orders : orders.filter((o) => o.status === filter)
 
@@ -360,28 +366,88 @@ export default function OrdersView({ orders }: { orders: Order[] }) {
     return acc
   }, {})
 
-  if (orders.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl border border-[#EAE3DC] py-20 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-[#F5EFE6] flex items-center justify-center mx-auto mb-5">
-          <ShoppingBag size={32} className="text-[#C8896A]" />
-        </div>
-        <h2 className="text-xl font-serif font-bold text-[#2D1F1A] mb-2">No orders yet</h2>
-        <p className="text-sm text-[#9E8079] mb-6 max-w-xs mx-auto leading-relaxed">
-          You haven&apos;t placed any orders. Discover beautiful handmade crafts!
-        </p>
-        <Link
-          href="/#products"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#C8896A] text-white text-sm font-semibold rounded-full hover:bg-[#A8694A] transition-all hover:shadow-md hover:-translate-y-px"
-        >
-          <ShoppingBag size={16} /> Browse Products
-        </Link>
-      </div>
-    )
+  function trackOrder(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const normalizedId = orderId.trim().replace(/^#/, '')
+    if (!/^\d+$/.test(normalizedId)) {
+      setSearchError('Enter a valid numeric order ID.')
+      return
+    }
+
+    const match = orders.find((order) => order.id === Number(normalizedId))
+    if (!match) {
+      setSearchError('This order ID was not found in your orders.')
+      return
+    }
+
+    setSearchError('')
+    router.push(`/orders/${match.id}/tracking`)
   }
 
   return (
     <div className="space-y-5">
+      <form
+        onSubmit={trackOrder}
+        className="bg-white border border-[#EAE3DC] p-4 sm:p-5"
+      >
+        <label htmlFor="order-id" className="block text-sm font-semibold text-[#2D1F1A]">
+          Track an order by ID
+        </label>
+        <p className="mt-1 text-xs text-[#9E8079]">
+          Enter the order ID shown on your receipt or in the list below.
+        </p>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9E8079]"
+            />
+            <input
+              id="order-id"
+              value={orderId}
+              onChange={(event) => {
+                setOrderId(event.target.value)
+                if (searchError) setSearchError('')
+              }}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="e.g. 1024"
+              className="h-11 w-full border border-[#E8D5C4] bg-[#FDF8F4] pl-10 pr-4 text-sm text-[#2D1F1A] outline-none transition focus:border-[#C8896A] focus:ring-2 focus:ring-[#C8896A]/20"
+            />
+          </div>
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center gap-2 bg-[#C8896A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#A8694A]"
+          >
+            <Navigation size={15} />
+            Track Order
+          </button>
+        </div>
+        {searchError && (
+          <p role="alert" className="mt-2 text-xs font-medium text-rose-600">
+            {searchError}
+          </p>
+        )}
+      </form>
+
+      {orders.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-[#EAE3DC] py-20 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-[#F5EFE6] flex items-center justify-center mx-auto mb-5">
+            <ShoppingBag size={32} className="text-[#C8896A]" />
+          </div>
+          <h2 className="text-xl font-serif font-bold text-[#2D1F1A] mb-2">No orders yet</h2>
+          <p className="text-sm text-[#9E8079] mb-6 max-w-xs mx-auto leading-relaxed">
+            You haven&apos;t placed any orders. Discover beautiful handmade crafts!
+          </p>
+          <Link
+            href="/#products"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#C8896A] text-white text-sm font-semibold rounded-full hover:bg-[#A8694A] transition-all hover:shadow-md hover:-translate-y-px"
+          >
+            <ShoppingBag size={16} /> Browse Products
+          </Link>
+        </div>
+      ) : (
+        <>
       {/* Status filters */}
       <div className="flex flex-wrap gap-2">
         <button
@@ -421,6 +487,8 @@ export default function OrdersView({ orders }: { orders: Order[] }) {
           filtered.map((order) => <OrderCard key={order.id} order={order} />)
         )}
       </div>
+        </>
+      )}
     </div>
   )
 }

@@ -226,13 +226,6 @@ export default function MessengerPanel({ currentUserId }: Props) {
     .filter((s) => s.name.toLowerCase().includes(sellerSearch.toLowerCase()))
     .filter((s) => !convs.some((c) => c.user.id === s.id))
 
-  // Unread badge for outside button
-  const badge = unreadTotal > 0 && !open ? (
-    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 animate-pulse">
-      {unreadTotal > 9 ? '9+' : unreadTotal}
-    </span>
-  ) : null
-
   if (!currentUserId) return null
 
   return (
@@ -500,16 +493,6 @@ export default function MessengerPanel({ currentUserId }: Props) {
         )}
       </div>
 
-      {/* Trigger button — shown when panel is closed, with unread badge */}
-      {!open && currentUserId && (
-        <button
-          onClick={() => { setOpen(true); setMinimized(false) }}
-          className="fixed bottom-6 right-6 z-[140] w-12 h-12 rounded-full bg-[#C8896A] hover:bg-[#A8694A] text-white shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 flex items-center justify-center relative"
-        >
-          <MessageCircle size={20} />
-          {badge}
-        </button>
-      )}
     </>
   )
 }

@@ -10,6 +10,7 @@ import {
   RefreshCw, Tag, Shield, UserCheck, ClipboardList, ScrollText, Activity,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
+import BrandLogo from '@/components/BrandLogo'
 
 type NavChild = { label: string; href: string }
 type NavItem = {
@@ -82,19 +83,8 @@ export default function AdminSidebar({ isOpen, onClose }: Props) {
     >
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-5 border-b border-white/5 shrink-0">
-        <Link href="/admin/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#C8896A] flex items-center justify-center shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3C8.5 3 6 6.5 6 10.5C6 14.5 9 18 12 20C15 18 18 14.5 18 10.5C18 6.5 15.5 3 12 3Z" fill="white" opacity="0.95"/>
-              <path d="M12 20V23" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M9.5 22H14.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="12" cy="10" r="2.5" fill="#C8896A"/>
-            </svg>
-          </div>
-          <div>
-            <div className="font-serif font-bold text-white text-[15px] leading-tight">ArtisanNest</div>
-            <div className="text-[9px] text-[#C8896A] tracking-[0.2em] uppercase">Admin Panel</div>
-          </div>
+        <Link href="/admin/dashboard">
+          <BrandLogo compact dark subtitle="Admin Panel" imageClassName="size-9" />
         </Link>
         <button
           onClick={onClose}

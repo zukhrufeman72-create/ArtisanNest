@@ -4,6 +4,7 @@ import { useState, useEffect, useActionState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { login, register } from '@/app/actions/auth'
+import BrandLogo from '@/components/BrandLogo'
 
 type Props = {
   open: boolean
@@ -49,19 +50,8 @@ export default function AuthModal({ open, onClose, defaultTab = 'login' }: Props
         </button>
 
         {/* Logo */}
-        <div className="px-8 pt-8 pb-0 flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#C8896A] flex items-center justify-center shadow-sm shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3C8.5 3 6 6.5 6 10.5C6 14.5 9 18 12 20C15 18 18 14.5 18 10.5C18 6.5 15.5 3 12 3Z" fill="white" opacity="0.95" />
-              <path d="M12 20V23" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M9.5 22H14.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="12" cy="10" r="2.5" fill="#C8896A" />
-            </svg>
-          </div>
-          <div>
-            <div className="font-serif font-bold text-base text-[#2D1F1A] leading-tight">ArtisanNest</div>
-            <div className="text-[9px] text-[#9E8079] tracking-[0.15em] uppercase leading-none">Handmade Crafts</div>
-          </div>
+        <div className="px-8 pt-8 pb-0">
+          <BrandLogo className="w-52" imageClassName="max-h-12" />
         </div>
 
         {/* Tabs */}

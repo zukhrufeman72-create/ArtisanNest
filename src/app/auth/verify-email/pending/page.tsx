@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { resendVerification } from '@/app/actions/auth'
 import { Mail, RefreshCw, CheckCircle } from 'lucide-react'
 import { Suspense } from 'react'
+import BrandLogo from '@/components/BrandLogo'
 
 function PendingContent() {
   const searchParams = useSearchParams()
@@ -23,16 +24,8 @@ function PendingContent() {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#C8896A] flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M12 3C8.5 3 6 6.5 6 10.5C6 14.5 9 18 12 20C15 18 18 14.5 18 10.5C18 6.5 15.5 3 12 3Z" fill="white" opacity="0.95"/>
-                <path d="M12 20V23" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M9.5 22H14.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="12" cy="10" r="2.5" fill="#C8896A"/>
-              </svg>
-            </div>
-            <span className="font-serif font-bold text-[#2D1F1A] text-xl">ArtisanNest</span>
+          <Link href="/" className="inline-flex" aria-label="ArtisanNest home">
+            <BrandLogo className="w-64" imageClassName="max-h-14" />
           </Link>
         </div>
 
