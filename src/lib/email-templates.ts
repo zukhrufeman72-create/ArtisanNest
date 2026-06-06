@@ -83,9 +83,17 @@ function emailWrapper(previewText: string, content: string): string {
 </html>`
 }
 
-// ─── Seller Verification Email ────────────────────────────────────────────────
+// ─── Account Verification Email ───────────────────────────────────────────────
 
-export function sellerVerificationTemplate(name: string, verificationUrl: string): string {
+export function accountVerificationTemplate(
+  name: string,
+  verificationUrl: string,
+  role: 'SELLER' | 'CUSTOMER',
+): string {
+  const accountType = role === 'SELLER' ? 'seller' : 'customer'
+  const purpose = role === 'SELLER'
+    ? 'sharing your beautiful handmade crafts with the world'
+    : 'discovering and buying beautiful handmade crafts'
   const content = `
     <!-- Icon hero -->
     <div style="background:linear-gradient(135deg, ${brand.primary}15, ${brand.green}15);padding:40px 32px 0;text-align:center;">
@@ -96,7 +104,7 @@ export function sellerVerificationTemplate(name: string, verificationUrl: string
         Verify Your Email
       </h1>
       <p style="margin:0 0 32px;font-size:15px;color:${brand.muted};line-height:1.5;">
-        One quick step to activate your seller account
+        One quick step to activate your ${accountType} account
       </p>
     </div>
 
@@ -106,8 +114,8 @@ export function sellerVerificationTemplate(name: string, verificationUrl: string
         Hi <strong>${name}</strong>, welcome to ArtisanNest! 🎉
       </p>
       <p style="margin:0 0 28px;font-size:15px;color:#6B4C3B;line-height:1.7;">
-        You've taken the first step toward sharing your beautiful handmade crafts with the world.
-        To complete your seller account setup, please verify your email address by clicking the button below.
+        You've taken the first step toward ${purpose}.
+        To complete your ${accountType} account setup, please verify your email address by clicking the button below.
       </p>
 
       <!-- CTA Button -->

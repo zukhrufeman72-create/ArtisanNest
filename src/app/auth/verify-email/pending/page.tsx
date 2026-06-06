@@ -12,12 +12,7 @@ function PendingContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email') ?? ''
 
-  const [state, formAction, isPending] = useActionState(
-    async (_prev: any, formData: FormData) => {
-      return resendVerification(formData)
-    },
-    null,
-  )
+  const [state, formAction, isPending] = useActionState(resendVerification, undefined)
 
   return (
     <div className="min-h-screen bg-[#F5F2EF] flex items-center justify-center px-4 py-12">
@@ -48,7 +43,7 @@ function PendingContent() {
             </p>
           )}
           <p className="text-[#9E8079] text-sm mb-6 leading-relaxed">
-            Click the link in the email to activate your seller account.
+            Click the link in the email to activate your account.
             The link expires in <strong className="text-[#C8896A]">1 hour</strong>.
           </p>
 
@@ -58,7 +53,7 @@ function PendingContent() {
               'Open your email inbox',
               'Look for an email from ArtisanNest',
               'Click "Verify My Email Address"',
-              'Log in to start selling',
+              'Your account opens after verification',
             ].map((step, i) => (
               <div key={i} className="flex items-center gap-3 text-sm text-[#6B4C3B]">
                 <span className="w-6 h-6 rounded-full bg-[#C8896A]/20 text-[#C8896A] text-xs font-bold flex items-center justify-center shrink-0">

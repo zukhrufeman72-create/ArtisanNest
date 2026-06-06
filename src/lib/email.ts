@@ -1,7 +1,7 @@
 import 'server-only'
 import nodemailer from 'nodemailer'
 import {
-  sellerVerificationTemplate,
+  accountVerificationTemplate,
   customerWelcomeTemplate,
   adminNotificationTemplate,
   orderConfirmationTemplate,
@@ -39,12 +39,17 @@ async function sendMail(options: { to: string; subject: string; html: string }) 
 
 // ─── Public send functions ────────────────────────────────────────────────────
 
-export async function sendVerificationEmail(email: string, name: string, token: string) {
+export async function sendVerificationEmail(
+  email: string,
+  name: string,
+  token: string,
+  role: 'SELLER' | 'CUSTOMER',
+) {
   const verificationUrl = `${APP_URL}/auth/verify-email?token=${token}`
   await sendMail({
     to: email,
-    subject: '✉️ Verify Your Seller Account – ArtisanNest',
-    html: sellerVerificationTemplate(name, verificationUrl),
+    subject: `Verify Your ${role === 'SELLER' ? 'Seller' : 'Customer'} Account - ArtisanNest`,
+    html: accountVerificationTemplate(name, verificationUrl, role),
   })
 }
 

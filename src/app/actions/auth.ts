@@ -1,6 +1,5 @@
 'use server'
 
-import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { randomBytes } from 'crypto'
@@ -9,7 +8,6 @@ import { prisma } from '@/lib/prisma'
 import { createSession, deleteSession } from '@/lib/session'
 import {
   sendVerificationEmail,
-  sendCustomerWelcomeEmail,
   sendAdminNotification,
 } from '@/lib/email'
 import { notifyAdmin } from '@/lib/notifications'
@@ -60,8 +58,8 @@ export async function login(state: FormState, formData: FormData): Promise<FormS
     return { message: 'Invalid email or password.' }
   }
 
-  // Block unverified sellers
-  if (user.role === 'SELLER' && !user.isVerified) {
+  // Public customer and seller accounts must verify their email before login.
+  if ((user.role === 'SELLER' || user.role === 'CUSTOMER') && !user.isVerified) {
     return {
       message: 'Your email is not verified yet. Please check your inbox and click the verification link.',
       email: user.email,
@@ -100,51 +98,30 @@ export async function register(state: FormState, formData: FormData): Promise<Fo
   const hashedPassword = await bcrypt.hash(password, 12)
   const now = new Date()
 
-  if (role === 'SELLER') {
-    // Sellers must verify email before logging in
-    const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, role, isVerified: false },
-    })
+  // Customers and sellers must verify their email before they can log in.
+  await prisma.user.create({
+    data: { name, email, password: hashedPassword, role, isVerified: false },
+  })
 
-    // Generate a secure verification token (1 hour expiry)
-    const token = randomBytes(32).toString('hex')
-    const expiresAt = new Date(now.getTime() + 60 * 60 * 1000)
+  const token = randomBytes(32).toString('hex')
+  const expiresAt = new Date(now.getTime() + 60 * 60 * 1000)
 
-    await prisma.verificationToken.deleteMany({ where: { email } })
-    await prisma.verificationToken.create({ data: { email, token, expiresAt } })
+  await prisma.verificationToken.deleteMany({ where: { email } })
+  await prisma.verificationToken.create({ data: { email, token, expiresAt } })
 
-    await Promise.allSettled([
-      sendVerificationEmail(email, name, token),
-      sendAdminNotification(name, email, 'SELLER', now),
-      notifyAdmin({
-        type: 'NEW_SELLER',
-        title: 'New Seller Registered',
-        body: `${name} (${email}) signed up as a seller and is awaiting email verification.`,
-        link: '/admin/users/sellers',
-      }),
-    ])
+  const isSeller = role === 'SELLER'
+  await Promise.allSettled([
+    sendVerificationEmail(email, name, token, role),
+    sendAdminNotification(name, email, role, now),
+    notifyAdmin({
+      type: isSeller ? 'NEW_SELLER' : 'NEW_CUSTOMER',
+      title: `New ${isSeller ? 'Seller' : 'Customer'} Registered`,
+      body: `${name} (${email}) signed up as a ${role.toLowerCase()} and is awaiting email verification.`,
+      link: isSeller ? '/admin/users/sellers' : '/admin/users/customers',
+    }),
+  ])
 
-    redirect(`/auth/verify-email/pending?email=${encodeURIComponent(email)}`)
-  } else {
-    // Customers are auto-verified and auto-logged-in
-    const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, role, isVerified: true },
-    })
-
-    await Promise.allSettled([
-      sendCustomerWelcomeEmail(email, name),
-      sendAdminNotification(name, email, 'CUSTOMER', now),
-      notifyAdmin({
-        type: 'NEW_CUSTOMER',
-        title: 'New Customer Registered',
-        body: `${name} (${email}) created a customer account.`,
-        link: '/admin/users/customers',
-      }),
-    ])
-
-    await createSession(user.id, user.role)
-    redirect('/')
-  }
+  redirect(`/auth/verify-email/pending?email=${encodeURIComponent(email)}`)
 }
 
 // ── Logout ────────────────────────────────────────────────────────────────────
@@ -156,7 +133,7 @@ export async function logout() {
 
 // ── Resend verification ───────────────────────────────────────────────────────
 
-export async function resendVerification(formData: FormData): Promise<FormState> {
+export async function resendVerification(_state: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get('email') ?? '').trim()
   if (!email) return { message: 'Email address is required.' }
 
@@ -165,8 +142,8 @@ export async function resendVerification(formData: FormData): Promise<FormState>
     select: { name: true, isVerified: true, role: true },
   })
 
-  if (!user || user.role !== 'SELLER') {
-    return { message: 'No seller account found with this email.' }
+  if (!user || (user.role !== 'SELLER' && user.role !== 'CUSTOMER')) {
+    return { message: 'No customer or seller account found with this email.' }
   }
 
   if (user.isVerified) {
@@ -178,7 +155,7 @@ export async function resendVerification(formData: FormData): Promise<FormState>
   await prisma.verificationToken.deleteMany({ where: { email } })
   await prisma.verificationToken.create({ data: { email, token, expiresAt } })
 
-  await sendVerificationEmail(email, user.name, token)
+  await sendVerificationEmail(email, user.name, token, user.role)
 
   return { success: true, message: 'Verification email resent! Please check your inbox.' }
 }

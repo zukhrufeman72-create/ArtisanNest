@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createSession } from '@/lib/session'
+import { sendCustomerWelcomeEmail } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ status: 'expired', email: record.email })
   }
 
-  // Mark seller as verified
+  // Mark the customer or seller as verified.
   const user = await prisma.user.update({
     where: { email: record.email },
     data: { isVerified: true },
@@ -33,5 +34,9 @@ export async function GET(request: NextRequest) {
   // Create session (auto-login)
   await createSession(user.id, user.role)
 
-  return NextResponse.json({ status: 'success', name: user.name })
+  if (user.role === 'CUSTOMER') {
+    await sendCustomerWelcomeEmail(record.email, user.name)
+  }
+
+  return NextResponse.json({ status: 'success', name: user.name, role: user.role })
 }

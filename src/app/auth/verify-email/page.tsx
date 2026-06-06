@@ -8,7 +8,7 @@ import { Suspense } from 'react'
 import BrandLogo from '@/components/BrandLogo'
 
 type VerifyResult =
-  | { status: 'success'; name: string }
+  | { status: 'success'; name: string; role: 'CUSTOMER' | 'SELLER' }
   | { status: 'expired'; email?: string }
   | { status: 'invalid' }
   | { status: 'loading' }
@@ -17,12 +17,16 @@ function VerifyContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get('token')
-  const [result, setResult] = useState<VerifyResult>({ status: 'loading' })
+  const [result, setResult] = useState<VerifyResult>(
+    token ? { status: 'loading' } : { status: 'invalid' },
+  )
   const [countdown, setCountdown] = useState(4)
+  const destination = result.status === 'success' && result.role === 'SELLER'
+    ? '/seller/dashboard'
+    : '/'
 
   useEffect(() => {
     if (!token) {
-      setResult({ status: 'invalid' })
       return
     }
 
@@ -39,13 +43,13 @@ function VerifyContent() {
       setCountdown((c) => {
         if (c <= 1) {
           clearInterval(interval)
-          router.push('/seller/dashboard')
+          router.push(destination)
         }
         return c - 1
       })
     }, 1000)
     return () => clearInterval(interval)
-  }, [result.status, router])
+  }, [destination, result.status, router])
 
   return (
     <div className="min-h-screen bg-[#F5F2EF] flex items-center justify-center px-4 py-12">
@@ -74,10 +78,10 @@ function VerifyContent() {
               </div>
               <h1 className="text-2xl font-serif font-bold text-[#2D1F1A] mb-2">Email Verified!</h1>
               <p className="text-[#9E8079] text-sm mb-2 leading-relaxed">
-                Welcome aboard, <strong className="text-[#2D1F1A]">{result.name}</strong>! Your seller account is now active.
+                Welcome aboard, <strong className="text-[#2D1F1A]">{result.name}</strong>! Your {result.role === 'SELLER' ? 'seller' : 'customer'} account is now active.
               </p>
               <p className="text-xs text-[#9E8079] mb-6">
-                Redirecting to your dashboard in <strong className="text-[#7D9B76]">{countdown}s</strong>…
+                Redirecting to your {result.role === 'SELLER' ? 'dashboard' : 'shopping page'} in <strong className="text-[#7D9B76]">{countdown}s</strong>…
               </p>
               <div className="w-full bg-[#EAE3DC] rounded-full h-1 mb-6 overflow-hidden">
                 <div
@@ -86,14 +90,16 @@ function VerifyContent() {
                 />
               </div>
               <Link
-                href="/seller/dashboard"
+                href={destination}
                 className="block w-full py-3 bg-[#7D9B76] text-white text-sm font-semibold rounded-xl text-center hover:bg-[#6a8663] transition-colors"
               >
-                Go to Dashboard →
+                {result.role === 'SELLER' ? 'Go to Dashboard' : 'Start Shopping'} →
               </Link>
-              <p className="mt-3 text-xs text-[#9E8079]">
-                Products you submit will need admin approval before going live.
-              </p>
+              {result.role === 'SELLER' && (
+                <p className="mt-3 text-xs text-[#9E8079]">
+                  Products you submit will need admin approval before going live.
+                </p>
+              )}
             </>
           )}
 
