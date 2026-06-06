@@ -1,6 +1,7 @@
 import AnimatedSection from "./AnimatedSection"
 import { categories as staticCategories } from "@/lib/data"
 import Link from "next/link"
+import { ChevronRight } from "lucide-react"
 
 type DbCategory = {
   id: number
@@ -47,7 +48,7 @@ export default function Categories({ categories }: { categories: DbCategory[] })
                 const style = CATEGORY_STYLES[i % CATEGORY_STYLES.length]
                 return (
                   <AnimatedSection key={cat.id} delay={i * 70}>
-                    <Link href="#">
+                    <Link href={`/shop?category=${cat.id}`}>
                       <div className={`group bg-linear-to-br ${style.gradient} rounded-2xl p-5 text-center border border-white/60 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 cursor-pointer h-full`}>
                         <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">
                           {style.emoji}
@@ -60,9 +61,7 @@ export default function Categories({ categories }: { categories: DbCategory[] })
                         </div>
                         <div className="mt-3 flex justify-center">
                           <span className="w-6 h-6 rounded-full bg-white/60 group-hover:bg-[#C8896A] flex items-center justify-center transition-colors duration-300">
-                            <svg className="w-3 h-3 text-[#C8896A] group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
+                            <ChevronRight className="w-3 h-3 text-[#C8896A] group-hover:text-white transition-colors" />
                           </span>
                         </div>
                       </div>
