@@ -6,6 +6,8 @@ import Footer from '@/components/Footer'
 import ChatWindow from '@/components/ChatWindow'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { z } from 'zod'
+import { getAuthorizedChatPair } from '@/lib/chat-authorization'
 
 export default async function ChatPage({
   params,
@@ -13,33 +15,26 @@ export default async function ChatPage({
   params: Promise<{ userId: string }>
 }) {
   const session = await verifySession()
-  const { userId } = await params
-  const otherId = parseInt(userId)
+  const parsedUserId = z.coerce.number().int().positive().safeParse((await params).userId)
+  if (!parsedUserId.success) redirect('/messages')
 
-  if (isNaN(otherId) || otherId === session.userId) redirect('/')
+  const pair = await getAuthorizedChatPair(session.userId, parsedUserId.data)
+  if (!pair) redirect('/messages')
 
-  const [other, messages] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: otherId },
-      select: { id: true, name: true, role: true },
-    }),
-    prisma.message.findMany({
-      where: {
-        OR: [
-          { senderId: session.userId, receiverId: otherId },
-          { senderId: otherId, receiverId: session.userId },
-        ],
-      },
-      orderBy: { createdAt: 'asc' },
-      take: 100,
-      select: { id: true, content: true, createdAt: true, senderId: true, receiverId: true, isRead: true },
-    }),
-  ])
-
-  if (!other) redirect('/')
+  const messages = await prisma.message.findMany({
+    where: {
+      OR: [
+        { senderId: pair.currentUser.id, receiverId: pair.otherUser.id },
+        { senderId: pair.otherUser.id, receiverId: pair.currentUser.id },
+      ],
+    },
+    orderBy: { createdAt: 'asc' },
+    take: 100,
+    select: { id: true, content: true, createdAt: true, senderId: true, receiverId: true, isRead: true },
+  })
 
   await prisma.message.updateMany({
-    where: { senderId: otherId, receiverId: session.userId, isRead: false },
+    where: { senderId: pair.otherUser.id, receiverId: pair.currentUser.id, isRead: false },
     data: { isRead: true },
   })
 
@@ -57,10 +52,14 @@ export default async function ChatPage({
 
           <div style={{ height: '600px' }}>
             <ChatWindow
-              currentUserId={session.userId}
-              otherUserId={otherId}
+              currentUserId={pair.currentUser.id}
+              otherUserId={pair.otherUser.id}
               initialMessages={messages.map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }))}
-              otherUser={other}
+              otherUser={{
+                id: pair.otherUser.id,
+                name: pair.otherUser.name,
+                role: pair.otherUser.role,
+              }}
             />
           </div>
         </div>

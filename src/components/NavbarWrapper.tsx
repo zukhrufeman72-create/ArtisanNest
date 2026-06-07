@@ -27,7 +27,10 @@ export default async function NavbarWrapper() {
   return (
     <>
       <Navbar user={user} initialCartCount={initialCartCount} />
-      <MessengerPanelWrapper currentUserId={session?.userId ?? null} />
+      <MessengerPanelWrapper
+        currentUserId={session?.userId ?? null}
+        currentUserRole={user?.role ?? null}
+      />
     </>
   )
 }

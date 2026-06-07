@@ -3,16 +3,24 @@ import { prisma } from '@/lib/prisma'
 import NavbarWrapper from '@/components/NavbarWrapper'
 import Footer from '@/components/Footer'
 import MessengerView from './MessengerView'
+import { getCurrentChatUser, getOppositeChatRole } from '@/lib/chat-authorization'
+import { redirect } from 'next/navigation'
 
 export default async function MessagesPage() {
   const session = await verifySession()
+  const currentUser = await getCurrentChatUser(session.userId)
+  if (!currentUser) redirect('/')
+  const otherRole = getOppositeChatRole(currentUser.role)
+  const validOtherUser = otherRole === 'SELLER'
+    ? { role: otherRole, isVerified: true, isApproved: true }
+    : { role: otherRole, isVerified: true }
 
   // Existing conversations
   const rawMessages = await prisma.message.findMany({
     where: {
       OR: [
-        { senderId: session.userId },
-        { receiverId: session.userId },
+        { senderId: currentUser.id, receiver: validOtherUser },
+        { receiverId: currentUser.id, sender: validOtherUser },
       ],
     },
     orderBy: { createdAt: 'desc' },
@@ -36,7 +44,7 @@ export default async function MessagesPage() {
   }>()
 
   for (const msg of rawMessages) {
-    const other = msg.senderId === session.userId ? msg.receiver : msg.sender
+    const other = msg.senderId === currentUser.id ? msg.receiver : msg.sender
     if (!convMap.has(other.id)) {
       convMap.set(other.id, {
         user: other,
@@ -45,7 +53,7 @@ export default async function MessagesPage() {
         unread: 0,
       })
     }
-    if (!msg.isRead && msg.receiverId === session.userId) {
+    if (!msg.isRead && msg.receiverId === currentUser.id) {
       convMap.get(other.id)!.unread++
     }
   }
@@ -53,9 +61,9 @@ export default async function MessagesPage() {
   const conversations = Array.from(convMap.values())
 
   // All sellers (for "New Chat" panel — customers can browse and start new conversations)
-  const sellers = session.role !== 'ADMIN'
+  const sellers = currentUser.role === 'CUSTOMER'
     ? await prisma.user.findMany({
-        where: { role: 'SELLER', id: { not: session.userId } },
+        where: { role: 'SELLER', isVerified: true, isApproved: true },
         orderBy: { name: 'asc' },
         select: { id: true, name: true, role: true, products: { take: 1, select: { id: true } } },
       })
@@ -67,8 +75,8 @@ export default async function MessagesPage() {
       <main className="min-h-screen bg-[#FAF7F4]">
         <MessengerView
           conversations={conversations}
-          currentUserId={session.userId}
-          currentUserRole={session.role}
+          currentUserId={currentUser.id}
+          currentUserRole={currentUser.role}
           sellers={sellers.map((s) => ({ id: s.id, name: s.name, role: s.role }))}
         />
       </main>

@@ -1,15 +1,27 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getOptionalSession } from '@/lib/dal'
+import { getCurrentChatUser, getOppositeChatRole } from '@/lib/chat-authorization'
 
 export async function GET() {
   const session = await getOptionalSession()
   if (!session?.userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const currentUser = await getCurrentChatUser(session.userId)
+  if (!currentUser) {
+    return NextResponse.json({ error: 'Messaging is only available to customers and sellers.' }, { status: 403 })
+  }
+  const otherRole = getOppositeChatRole(currentUser.role)
+  const validOtherUser = otherRole === 'SELLER'
+    ? { role: otherRole, isVerified: true, isApproved: true }
+    : { role: otherRole, isVerified: true }
 
   // All messages involving this user
   const rawMessages = await prisma.message.findMany({
     where: {
-      OR: [{ senderId: session.userId }, { receiverId: session.userId }],
+      OR: [
+        { senderId: currentUser.id, receiver: validOtherUser },
+        { receiverId: currentUser.id, sender: validOtherUser },
+      ],
     },
     orderBy: { createdAt: 'desc' },
     select: {
@@ -33,7 +45,7 @@ export async function GET() {
   }>()
 
   for (const msg of rawMessages) {
-    const other = msg.senderId === session.userId ? msg.receiver : msg.sender
+    const other = msg.senderId === currentUser.id ? msg.receiver : msg.sender
     if (!convMap.has(other.id)) {
       convMap.set(other.id, {
         user: other,
@@ -42,7 +54,7 @@ export async function GET() {
         unread: 0,
       })
     }
-    if (!msg.isRead && msg.receiverId === session.userId) {
+    if (!msg.isRead && msg.receiverId === currentUser.id) {
       convMap.get(other.id)!.unread++
     }
   }
@@ -51,9 +63,9 @@ export async function GET() {
   const unreadTotal = conversations.reduce((s, c) => s + c.unread, 0)
 
   // Sellers list for new chats
-  const sellers = session.role !== 'ADMIN'
+  const sellers = currentUser.role === 'CUSTOMER'
     ? await prisma.user.findMany({
-        where: { role: 'SELLER', id: { not: session.userId } },
+        where: { role: 'SELLER', isVerified: true, isApproved: true },
         orderBy: { name: 'asc' },
         select: { id: true, name: true, role: true },
       })

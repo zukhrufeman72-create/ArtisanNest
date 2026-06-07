@@ -24,9 +24,12 @@ type Message = {
   isRead: boolean
 }
 
-type Props = { currentUserId: number | null }
+type Props = {
+  currentUserId: number | null
+  currentUserRole: string | null
+}
 
-export default function MessengerPanel({ currentUserId }: Props) {
+export default function MessengerPanel({ currentUserId, currentUserRole }: Props) {
   const [open, setOpen] = useState(false)
   const [minimized, setMinimized] = useState(false)
   const [convs, setConvs] = useState<Conversation[]>([])
@@ -326,18 +329,20 @@ export default function MessengerPanel({ currentUserId }: Props) {
                       className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-[#F5F2EF] border border-[#EAE3DC] rounded-lg text-[#2D1F1A] placeholder-[#C4AEA4] focus:outline-none focus:border-[#C8896A] transition-all"
                     />
                   </div>
-                  <button
-                    onClick={() => setShowNewChat((v) => !v)}
-                    className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
-                      showNewChat ? 'bg-[#C8896A] text-white' : 'bg-[#F5F2EF] text-[#6B4C3B] hover:bg-[#EAE3DC]'
-                    }`}
-                  >
-                    <PlusCircle size={11} /> New Chat
-                  </button>
+                  {currentUserRole === 'CUSTOMER' && (
+                    <button
+                      onClick={() => setShowNewChat((v) => !v)}
+                      className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
+                        showNewChat ? 'bg-[#C8896A] text-white' : 'bg-[#F5F2EF] text-[#6B4C3B] hover:bg-[#EAE3DC]'
+                      }`}
+                    >
+                      <PlusCircle size={11} /> New Chat
+                    </button>
+                  )}
                 </div>
 
                 {/* Seller picker */}
-                {showNewChat && (
+                {currentUserRole === 'CUSTOMER' && showNewChat && (
                   <div className="border-b border-[#EAE3DC] bg-[#FDF8F4]">
                     <div className="px-2 py-1.5">
                       <input

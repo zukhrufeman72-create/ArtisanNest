@@ -162,7 +162,7 @@ export default function MessengerView({ conversations: initialConvs, currentUser
             <div className="px-4 py-4 border-b border-[#EAE3DC] shrink-0">
               <div className="flex items-center justify-between mb-3">
                 <h1 className="text-base font-serif font-bold text-[#2D1F1A]">Messages</h1>
-                {currentUserRole !== 'ADMIN' && (
+                {currentUserRole === 'CUSTOMER' && (
                   <button
                     onClick={() => setShowNewChat((v) => !v)}
                     className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${showNewChat ? 'bg-[#C8896A] text-white' : 'bg-[#F5F2EF] text-[#6B4C3B] hover:bg-[#EAE3DC]'}`}
@@ -229,7 +229,7 @@ export default function MessengerView({ conversations: initialConvs, currentUser
                 <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
                   <MessageCircle size={24} className="text-[#C4AEA4]" />
                   <p className="text-sm text-[#9E8079]">No conversations yet</p>
-                  {currentUserRole !== 'ADMIN' && (
+                  {currentUserRole === 'CUSTOMER' && (
                     <button
                       onClick={() => setShowNewChat(true)}
                       className="text-xs text-[#C8896A] font-semibold hover:text-[#A8694A] transition-colors"
@@ -286,7 +286,7 @@ export default function MessengerView({ conversations: initialConvs, currentUser
                   <h2 className="font-serif text-lg font-bold text-[#2D1F1A] mb-1">Your Messages</h2>
                   <p className="text-sm text-[#9E8079]">Select a conversation to start chatting</p>
                 </div>
-                {currentUserRole !== 'ADMIN' && sellers.length > 0 && (
+                {currentUserRole === 'CUSTOMER' && sellers.length > 0 && (
                   <button
                     onClick={() => setShowNewChat(true)}
                     className="flex items-center gap-2 px-5 py-2.5 bg-[#C8896A] text-white text-sm font-semibold rounded-xl hover:bg-[#A8694A] transition-all hover:shadow-md"
