@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { sendOrderConfirmationEmail } from '@/lib/email'
 import { createNotification } from '@/lib/notifications'
 import { CheckoutBodySchema, LOW_STOCK_THRESHOLD } from '@/lib/validations'
+import { getStripe } from '@/lib/stripe'
 import { randomUUID } from 'crypto'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 const SHIPPING_FEES: Record<string, number> = {
   STANDARD: 250,
@@ -69,6 +67,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment not completed. Please complete card payment.' }, { status: 400 })
     }
     try {
+      const stripe = getStripe()
       const pi = await stripe.paymentIntents.retrieve(stripePaymentIntentId)
       if (pi.status !== 'succeeded') {
         return NextResponse.json({ error: 'Payment was not successful. Please try again.' }, { status: 400 })

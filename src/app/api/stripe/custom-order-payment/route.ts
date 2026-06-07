@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 import { requireCustomer } from '@/lib/dal'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+import { getStripe } from '@/lib/stripe'
 
 export async function POST(req: NextRequest) {
   const session = await requireCustomer()
@@ -54,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Minimum payment amount is Rs. 50.' }, { status: 400 })
   }
 
-  const paymentIntent = await stripe.paymentIntents.create({
+  const paymentIntent = await getStripe().paymentIntents.create({
     amount: Math.round(amount * 100), // PKR → paisas
     currency: 'pkr',
     automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
