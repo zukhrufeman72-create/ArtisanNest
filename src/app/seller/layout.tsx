@@ -13,7 +13,11 @@ export default async function SellerLayout({ children }: { children: React.React
   })
 
   return (
-    <SellerShell sellerName={seller?.name ?? 'Seller'} sellerEmail={seller?.email ?? ''}>
+    <SellerShell
+      sellerId={session.userId}
+      sellerName={seller?.name ?? 'Seller'}
+      sellerEmail={seller?.email ?? ''}
+    >
       {children}
     </SellerShell>
   )

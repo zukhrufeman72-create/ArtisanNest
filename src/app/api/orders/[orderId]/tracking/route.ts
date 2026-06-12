@@ -147,6 +147,12 @@ export async function PATCH(
     if (!sellerItem) return NextResponse.json({ error: 'Access denied.' }, { status: 403 })
   }
 
+  const order = await prisma.order.findUnique({
+    where: { id },
+    select: { paymentMethod: true },
+  })
+  if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
+
   let body: unknown
   try {
     body = await request.json()
@@ -187,7 +193,27 @@ export async function PATCH(
     }),
     // If delivered, also update the order status
     ...(status === 'DELIVERED'
-      ? [prisma.order.update({ where: { id }, data: { status: 'DELIVERED' } })]
+      ? [
+          prisma.order.update({
+            where: { id },
+            data: {
+              status: 'DELIVERED',
+              paymentStatus: order.paymentMethod === 'COD' ? 'PAID' : undefined,
+            },
+          }),
+          ...(order.paymentMethod === 'COD'
+            ? [
+                prisma.paymentTransaction.updateMany({
+                  where: {
+                    orderId: id,
+                    paymentMethod: 'COD',
+                    paymentStatus: 'PENDING',
+                  },
+                  data: { paymentStatus: 'SUCCESS' },
+                }),
+              ]
+            : []),
+        ]
       : []),
     ...(status === 'CANCELLED'
       ? [prisma.order.update({ where: { id }, data: { status: 'CANCELLED' } })]

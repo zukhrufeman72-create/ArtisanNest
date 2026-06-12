@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import SellerSidebar from './SellerSidebar'
 import SellerHeader from './SellerHeader'
+import MessengerPanelWrapper from '../MessengerPanelWrapper'
 
 type Props = {
   children: React.ReactNode
+  sellerId: number
   sellerName: string
   sellerEmail: string
 }
 
-export default function SellerShell({ children, sellerName, sellerEmail }: Props) {
+export default function SellerShell({ children, sellerId, sellerName, sellerEmail }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -32,6 +34,7 @@ export default function SellerShell({ children, sellerName, sellerEmail }: Props
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+      <MessengerPanelWrapper currentUserId={sellerId} currentUserRole="SELLER" />
     </div>
   )
 }

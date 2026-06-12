@@ -42,12 +42,30 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'You do not have items in this order' }, { status: 403 })
   }
 
-  const updated = await prisma.order.update({
-    where: { id },
-    data: {
-      status: status as OrderStatus,
-      paymentStatus: status === 'PAID' ? 'PAID' : undefined,
-    },
+  const codPaymentCollected = order.paymentMethod === 'COD' && status === 'DELIVERED'
+  const paymentConfirmed = status === 'PAID' || codPaymentCollected
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const updatedOrder = await tx.order.update({
+      where: { id },
+      data: {
+        status: status as OrderStatus,
+        paymentStatus: paymentConfirmed ? 'PAID' : undefined,
+      },
+    })
+
+    if (codPaymentCollected) {
+      await tx.paymentTransaction.updateMany({
+        where: {
+          orderId: id,
+          paymentMethod: 'COD',
+          paymentStatus: 'PENDING',
+        },
+        data: { paymentStatus: 'SUCCESS' },
+      })
+    }
+
+    return updatedOrder
   })
 
   // Send email + in-app notification to customer (fire-and-forget)
@@ -68,7 +86,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }).catch(console.error)
   }
 
-  return NextResponse.json({ success: true, status: updated.status })
+  return NextResponse.json({
+    success: true,
+    status: updated.status,
+    paymentStatus: updated.paymentStatus,
+  })
 }
 
 function statusTitle(status: string): string {
