@@ -1,23 +1,36 @@
+import { loadEnvConfig } from '@next/env'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+
+loadEnvConfig(process.cwd())
 
 const prisma = new PrismaClient()
 
 async function main() {
-  const hashedPassword = await bcrypt.hash('admin1010', 10)
+  const email = process.env.SUPER_ADMIN_EMAIL ?? 'superadmin@hc.com'
+  const password = process.env.SUPER_ADMIN_PASSWORD ?? 'Qwerty1234'
+  const hashedPassword = await bcrypt.hash(password, 12)
 
   await prisma.user.upsert({
-    where: { email: 'admin@hc.com' },
-    update: {},
-    create: {
-      name: 'Admin',
-      email: 'admin@hc.com',
+    where: { email },
+    update: {
+      name: 'Super Admin',
       password: hashedPassword,
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
+      isVerified: true,
+      isApproved: true,
+    },
+    create: {
+      name: 'Super Admin',
+      email,
+      password: hashedPassword,
+      role: 'SUPER_ADMIN',
+      isVerified: true,
+      isApproved: true,
     },
   })
 
-  console.log('Seeded admin user: admin@hc.com')
+  console.log(`Seeded super-admin user: ${email}`)
 }
 
 main()
